@@ -280,8 +280,6 @@ function finishResolve(){
   BR=cT(CI);rMsg=res.map(r=>{if(r.r==="bj")return`Blackjack! +$${(r.p-HB[r.i]).toFixed(0)}`;if(r.r==="win")return`Win! +$${HB[r.i]}`;if(r.r==="push")return"Push.";if(r.r==="bust")return`Bust! -$${HB[r.i]}`;return`Lose. -$${HB[r.i]}`;}).join(" | ");
   const hasWin=res.some(r=>r.r==="win"),hasBJ=res.some(r=>r.r==="bj"),hasLose=res.some(r=>r.r==="lose"||r.r==="bust");
   if(hasBJ)sndBJ();else if(hasWin)sndWin();else if(hasLose)sndLose();
-  // Assisted count feedback
-  if(S.countMode==="assisted"){const diff=playerRC-realRC;countFb=diff===0?{ok:true,msg:`Your count: ${playerRC} — Correct!`}:{ok:false,msg:`Your count: ${playerRC} — Actual: ${realRC} (off by ${diff>0?"+":""}${diff})`};}
   holeCardCounted=false;
   phase="result";render();
 }
@@ -460,7 +458,12 @@ function rPlay(){
   } else if(phase==="result"){
     // Assisted count buttons in result phase too
     if(S.countMode==="assisted")h+=`<div style="display:flex;justify-content:center;gap:8px;margin-bottom:6px"><button onclick="playerRC--;render()" style="width:50px;padding:8px 0;border-radius:8px;background:rgba(231,76,60,.25);border:1px solid #e74c3c55;color:#e74c3c;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">−1</button><button onclick="render()" style="width:50px;padding:8px 0;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#aaa;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">0</button><button onclick="playerRC++;render()" style="width:50px;padding:8px 0;border-radius:8px;background:rgba(39,174,96,.25);border:1px solid #27ae6055;color:#27ae60;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">+1</button></div>`;
-    h+=`<button class="dbtn" onclick="phase='betting';fb=null;shF=false;BC=[];cBet=0;countFb=null;render()" style="width:100%;background:linear-gradient(135deg,#2980b9,#1a5276);font-size:16px">NEXT HAND</button>`;
+    // Assisted count feedback shown after pressing NEXT HAND
+    if(S.countMode==="assisted"&&!countFb){
+      h+=`<button class="dbtn" onclick="const diff=playerRC-realRC;countFb=diff===0?{ok:true,msg:'Your count: '+playerRC+' — Correct!'}:{ok:false,msg:'Your count: '+playerRC+' — Actual: '+realRC+' (off by '+(diff>0?'+':'')+diff+')'};render()" style="width:100%;background:linear-gradient(135deg,#2980b9,#1a5276);font-size:16px">CHECK COUNT</button>`;
+    } else {
+      h+=`<button class="dbtn" onclick="phase='betting';fb=null;shF=false;BC=[];cBet=0;countFb=null;render()" style="width:100%;background:linear-gradient(135deg,#2980b9,#1a5276);font-size:16px">NEXT HAND</button>`;
+    }
   }
   h+=`</div></div></div>`;
   return h;
