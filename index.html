@@ -19,11 +19,6 @@
   .top-bar .title{font-size:16px;font-weight:700;color:#f1c40f;font-family:Georgia,serif;letter-spacing:.5px}
   .top-bar .ba{display:flex;align-items:center;gap:12px;font-size:13px}
   .content{flex:1;overflow:auto;display:flex;flex-direction:column}
-  .felt{position:relative;background:radial-gradient(ellipse at 50% 40%,#1a6b3c,#145a30 50%,#0d3f22 80%,#082a16);border-left:3px solid #8b6914;border-right:3px solid #8b6914}
-  .felt::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.012) 0px,rgba(255,255,255,.012) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:0}
-  .felt>*{position:relative;z-index:1}
-  .felt-watermark{position:absolute;top:8px;left:50%;transform:translateX(-50%);color:rgba(218,165,32,.18);font-size:10px;font-family:Georgia,serif;letter-spacing:3px;white-space:nowrap;z-index:0;pointer-events:none}
-  .felt-arc{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:70%;height:35%;border:1.5px solid rgba(218,165,32,.12);border-bottom:none;border-radius:999px 999px 0 0;z-index:0;pointer-events:none}
   .bet-badge{display:inline-block;background:rgba(0,0,0,.35);border:1px solid rgba(218,165,32,.3);border-radius:8px;padding:3px 12px;font-size:12px;font-weight:700;color:#f1c40f;font-family:Georgia,serif;letter-spacing:.5px}
   .tabs{display:flex;border-top:1px solid #1a2744;background:#0c1a30;padding-bottom:env(safe-area-inset-bottom,0);flex-shrink:0}
   .tb{flex:1;padding:8px 0 6px;border:none;cursor:pointer;background:0;display:flex;flex-direction:column;align-items:center;gap:2px;color:#4a5f7a;transition:color .2s;font-family:inherit}
@@ -61,8 +56,6 @@
   .c25{background:radial-gradient(circle at 35% 35%,#4CAF50,#2d7a32);color:#fff}
   .c100{background:radial-gradient(circle at 35% 35%,#1a1a1a,#444);color:#f1c40f}
   .c500{background:radial-gradient(circle at 35% 35%,#7B1FA2,#4A0072);color:#fff}
-  .betarea{min-height:66px;border:2px dashed rgba(255,255,255,.12);border-radius:14px;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 10px;flex-wrap:wrap}
-  .betarea.has{border-color:rgba(218,165,32,.3);background:rgba(0,0,0,.15)}
   .bcs{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;font-family:Georgia,serif;border:2px dashed rgba(255,255,255,.3);box-shadow:0 1px 4px rgba(0,0,0,.3)}
   .overlay{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease}
   .popup{background:#0f2038;border:1px solid #2a3f5f;border-radius:16px;padding:20px;width:85%;max-width:340px;animation:popIn .25s ease}
@@ -98,7 +91,7 @@ const HARD={5:["H","H","H","H","H","H","H","H","H","H"],6:["H","H","H","H","H","
 const SOFT={13:["H","H","H","D","D","H","H","H","H","H"],14:["H","H","H","D","D","H","H","H","H","H"],15:["H","H","D","D","D","H","H","H","H","H"],16:["H","H","D","D","D","H","H","H","H","H"],17:["H","D","D","D","D","H","H","H","H","H"],18:["DS","DS","DS","DS","DS","S","S","H","H","H"],19:["S","S","S","S","DS","S","S","S","S","S"],20:["S","S","S","S","S","S","S","S","S","S"],21:["S","S","S","S","S","S","S","S","S","S"]};
 const PAIR={2:["P","P","P","P","P","P","H","H","H","H"],3:["P","P","P","P","P","P","H","H","H","H"],4:["H","H","H","P","P","H","H","H","H","H"],5:["D","D","D","D","D","D","D","D","H","H"],6:["P","P","P","P","P","H","H","H","H","H"],7:["P","P","P","P","P","P","H","H","H","H"],8:["P","P","P","P","P","P","P","P","P","P"],9:["P","P","P","P","P","S","P","P","S","S"],10:["S","S","S","S","S","S","S","S","S","S"],11:["P","P","P","P","P","P","P","P","P","P"]};
 
-let S={numDecks:6,penetration:75,startingBankroll:1000,minBet:25,maxBet:500,dealerHitsSoft17:true,blackjackPays:1.5,soundOn:true};
+let S={numDecks:6,penetration:75,startingBankroll:1000,minBet:25,maxBet:500,dealerHitsSoft17:true,blackjackPays:1.5,soundOn:false};
 let shoe=[],cd=0,BR=1000,cBet=0;
 let CI={25:0,100:0,500:0},BC=[],cashBal=0;
 let phase="betting",PH=[[]],AHI=0,DC=[],HB=[0];
@@ -235,7 +228,7 @@ function render(){
   const el=document.getElementById("ct"),bv=document.getElementById("bdisp");
   BR=cT(CI)+bT();bv.textContent="$"+BR.toLocaleString();bv.style.color=BR>=S.startingBankroll?"#27ae60":"#e74c3c";
   document.querySelectorAll(".tb").forEach(b=>b.classList.toggle("active",b.dataset.tab===aTab));
-  if(aTab==="play")el.innerHTML=phase==="betting"?rBet():rTable();
+  if(aTab==="play")el.innerHTML=rPlay();
   else if(aTab==="rules")el.innerHTML=rRules();
   else if(aTab==="stats")el.innerHTML=rStPg();
   else if(aTab==="settings")el.innerHTML=rSePg();
@@ -243,90 +236,147 @@ function render(){
 }
 
 function bjPaysLabel(){return S.blackjackPays===1.5?"3 TO 2":S.blackjackPays===1.2?"6 TO 5":"2 TO 1";}
-function feltBg(){return`<div class="felt-watermark">BLACKJACK PAYS ${bjPaysLabel()}</div><div class="felt-arc"></div>`;}
+
 
 function chipEl(d,sz=52){return`<div class="chip ${CCL[d]}" style="width:${sz}px;height:${sz}px;font-size:${sz<40?9:12}px">$${d}</div>`;}
 
-function rStack(d,cnt,oc){
-  if(!cnt)return`<div style="display:flex;flex-direction:column;align-items:center;opacity:.25">${chipEl(d)}<div style="font-size:10px;color:rgba(255,255,255,.3);font-weight:600;margin-top:4px">×0</div></div>`;
-  const vis=Math.min(cnt,8),th=52+(vis-1)*5;
-  let h=`<div style="display:flex;flex-direction:column;align-items:center;cursor:pointer" onclick="${oc}"><div style="position:relative;width:52px;height:${th}px">`;
-  for(let i=0;i<vis;i++)h+=`<div class="chip ${CCL[d]}" style="width:52px;height:52px;font-size:12px;position:absolute;bottom:${i*5}px;z-index:${i}">$${d}</div>`;
-  h+=`</div><div style="font-size:10px;color:rgba(255,255,255,.5);font-weight:600;margin-top:4px">×${cnt}</div></div>`;return h;
-}
+function dealerBaySVG(){
+  return`<svg width="100%" height="130" viewBox="0 0 320 130" preserveAspectRatio="xMidYMin meet">
+<defs><pattern id="bg5" width="320" height="6" patternUnits="userSpaceOnUse"><line x1="0" y1="3" x2="320" y2="3" stroke="rgba(0,0,0,.15)" stroke-width=".5"/></pattern>
+<clipPath id="bc3"><path d="M64,0 L64,55 Q64,95 160,95 Q256,95 256,55 L256,0 Z"/></clipPath></defs>
+<rect x="0" y="0" width="320" height="130" fill="transparent"/>
+<g clip-path="url(#bc3)"><rect x="64" y="0" width="192" height="130" fill="#9a6e3a"/><rect x="64" y="0" width="192" height="130" fill="url(#bg5)" opacity=".2"/></g>
+<g clip-path="url(#bc3)">
+<path d="M150 65 Q128 75 105 83 Q88 89 78 92" fill="none" stroke="#e8b88a" stroke-width="11" stroke-linecap="round"/>
+<path d="M170 65 Q192 75 215 83 Q232 89 242 92" fill="none" stroke="#e8b88a" stroke-width="11" stroke-linecap="round"/>
+</g>
+<g clip-path="url(#bc3)">
+<ellipse cx="160" cy="28" rx="20" ry="23" fill="#e8b88a"/>
+<ellipse cx="152" cy="25" rx="2.8" ry="3.2" fill="#2c1810"/>
+<ellipse cx="168" cy="25" rx="2.8" ry="3.2" fill="#2c1810"/>
+<path d="M154 34 Q160 37 166 34" fill="none" stroke="#2c1810" stroke-width="1.8" stroke-linecap="round"/>
+<path d="M135 17 Q140 -2 185 -2 Q190 2 185 17 Q175 8 145 8 Z" fill="#1a1a2e"/>
+<rect x="135" y="15" width="50" height="7" rx="2" fill="#1a1a2e"/>
+<rect x="141" y="21" width="38" height="3" fill="#8b6914"/>
+<path d="M148 52 Q160 46 172 52" fill="#e8b88a"/>
+<rect x="145" y="52" width="30" height="50" rx="3" fill="#1a1a2e"/>
+<rect x="145" y="52" width="30" height="10" fill="#fff" opacity="0.9"/>
+<rect x="157" y="62" width="6" height="4" rx="1" fill="#c0392b"/>
+<line x1="160" y1="66" x2="160" y2="100" stroke="#8b6914" stroke-width="2"/>
+</g>
+<path d="M64,80 Q64,95 160,95 Q256,95 256,80 L256,130 L64,130 Z" fill="#a8763e"/>
+<path d="M64,83 Q64,97 160,97 Q256,97 256,83 L256,130 L64,130 Z" fill="#9a6e3a"/>
+<ellipse cx="82" cy="88" rx="10" ry="5.5" fill="#e8b88a"/>
+<ellipse cx="238" cy="88" rx="10" ry="5.5" fill="#e8b88a"/>
+<path d="M64,0 L64,55 Q64,95 160,95 Q256,95 256,55 L256,0" fill="none" stroke="#b8884c" stroke-width="6"/>
+<path d="M67,0 L67,55 Q67,92 160,92 Q253,92 253,55 L253,0" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1.5"/>
+<ellipse cx="82" cy="88" rx="10" ry="5.5" fill="#e8b88a"/>
+<ellipse cx="238" cy="88" rx="10" ry="5.5" fill="#e8b88a"/>
+</svg>`;}
 
-function rBet(){
-  let h=`<div class="felt" style="flex:1;display:flex;flex-direction:column;padding:12px 16px">${feltBg()}`;
-  if(needsS())h+=`<div style="background:rgba(0,0,0,.35);border:1px solid #f1c40f66;border-radius:10px;padding:8px 14px;font-size:13px;color:#f1c40f;text-align:center;margin-bottom:8px">🔄 Shoe will be reshuffled</div>`;
-  h+=`<div style="text-align:center;margin-bottom:6px"><span style="font-size:12px;color:rgba(255,255,255,.5);letter-spacing:1px">YOUR BET</span></div>`;
-  h+=`<div class="betarea ${BC.length?'has':''}">`;
-  if(!BC.length)h+=`<span style="color:rgba(255,255,255,.2);font-size:13px">Tap a chip stack to bet</span>`;
-  else{const g={500:0,100:0,25:0};BC.forEach(c=>g[c.denom]++);for(const d of DENOMS)for(let i=0;i<g[d];i++)h+=`<div class="bcs" style="background:${CBG[d]};color:${CTX[d]}">$${d}</div>`;}
-  h+=`</div><div style="text-align:center;margin:8px 0"><span style="font-size:28px;font-weight:700;color:#f1c40f;font-family:Georgia,serif">$${cBet}</span></div>`;
-  const canD=cBet>=S.minBet,canR=BC.length>0;
-  h+=`<div style="display:flex;gap:8px;margin-bottom:10px">`;
-  h+=`<button onclick="resetBet()" ${canR?"":"disabled"} style="flex:1;padding:12px 0;border-radius:10px;border:1px solid ${canR?"#e74c3c44":"#ffffff08"};font-size:13px;font-weight:700;cursor:${canR?"pointer":"not-allowed"};font-family:inherit;background:${canR?"rgba(231,76,60,.2)":"rgba(255,255,255,.04)"};color:${canR?"#e74c3c":"#333"}">↩ RESET</button>`;
-  h+=`<button onclick="deal()" ${canD?"":"disabled"} style="flex:2;padding:12px 0;border-radius:10px;border:none;font-size:15px;font-weight:700;cursor:${canD?"pointer":"not-allowed"};letter-spacing:1px;font-family:inherit;background:${canD?"linear-gradient(135deg,#27ae60,#1e8449)":"#222"};color:${canD?"#fff":"#555"}">DEAL</button></div>`;
-  if(cBet>0&&cBet<S.minBet)h+=`<div style="text-align:center;font-size:11px;color:#e74c3c;margin-bottom:4px">Min bet: $${S.minBet}</div>`;
-  h+=`<div style="flex:1"></div>`;
-  h+=`<div style="text-align:center;margin-bottom:8px"><button onclick="showCP=true;render()" style="padding:5px 16px;border-radius:8px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">🔄 Change Chips</button></div>`;
-  h+=`<div style="display:flex;justify-content:center;gap:24px;padding-bottom:8px;align-items:flex-end">`;
-  h+=rStack(25,CI[25],"addCB(25)")+rStack(100,CI[100],"addCB(100)")+rStack(500,CI[500],"addCB(500)");
+function rPlay(){
+  const isBetting=phase==="betting";
+  const opt=phase==="playing"?gOpt():null;
+  const totalBet=isBetting?cBet:HB.reduce((s,b)=>s+b,0);
+  let h=`<div style="flex:1;display:flex;flex-direction:column;overflow:hidden;border:6px solid #b8884c;border-radius:4px;position:relative;background:radial-gradient(ellipse at 50% 40%,#1a6b3c,#145a30 50%,#0d3f22 80%,#082a16)">`;
+  // Felt texture over entire table
+  h+=`<div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.012) 0px,rgba(255,255,255,.012) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:0"></div>`;
+  // Dealer bay — transparent outside the wood area so felt shows through
+  h+=`<div style="flex-shrink:0;position:relative;z-index:2">${dealerBaySVG()}</div>`;
+  // Play surface — no separate background, inherits from parent
+  h+=`<div style="flex:1;display:flex;flex-direction:column;padding:6px 12px;gap:4px;overflow:auto;position:relative">`;
+  // "BLACKJACK PAYS" printed on felt like real table markings
+  h+=`<div style="text-align:center;position:relative;z-index:1;margin-bottom:2px"><span style="font-size:10px;color:rgba(218,165,32,.4);font-family:Georgia,serif;letter-spacing:3px">BLACKJACK</span><br><span style="font-size:13px;color:rgba(218,165,32,.5);font-family:Georgia,serif;letter-spacing:2px;font-weight:700">PAYS ${bjPaysLabel()}</span></div>`;
+  h+=`<div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1"><div class="bet-badge">Bet: $${totalBet}</div><div class="bet-badge" style="color:#aaa;border-color:rgba(255,255,255,.1)">Bank: $${cT(CI)}</div></div>`;
+  if(!isBetting){
+    h+=`<div style="text-align:center;position:relative;z-index:1"><div style="font-size:9px;color:rgba(218,165,32,.3);letter-spacing:2px;margin-bottom:4px">DEALER ${phase==="dealer"||phase==="result"?"• "+hv(DC):""}</div><div style="display:flex;justify-content:center;gap:6px">`;
+    DC.forEach((c,i)=>{h+=cHTML(c,i===1&&(phase==="playing"||phase==="insurance"));});
+    h+=`</div></div>`;
+  } else {
+    h+=`<div style="text-align:center;position:relative;z-index:1"><div style="font-size:9px;color:rgba(218,165,32,.2);letter-spacing:2px;margin:4px 0">DEALER</div></div>`;
+  }
+  if(!isBetting){
+    if(fb)h+=`<div class="fbb" style="border:1px solid ${fb.color}55;position:relative;z-index:1"><span style="font-weight:700;color:${fb.color};font-size:14px">${fb.label}</span><span style="font-size:12px;color:#bbb;margin-left:8px">${fb.message}</span></div>`;
+    if(phase==="result"&&rMsg)h+=`<div class="rbb" style="position:relative;z-index:1">${rMsg}</div>`;
+    if(phase==="insurance")h+=`<div class="ibb" style="position:relative;z-index:1"><div style="font-size:14px;font-weight:600;color:#bb8fce;margin-bottom:8px">Insurance? (Half your bet)</div><div style="display:flex;gap:10px;justify-content:center"><button onclick="insure(true)" style="padding:10px 24px;border-radius:8px;background:#8e44ad;border:none;color:#fff;font-weight:600;cursor:pointer;font-family:inherit">Yes</button><button onclick="insure(false)" style="padding:10px 24px;border-radius:8px;background:#2c3e50;border:none;color:#fff;font-weight:600;cursor:pointer;font-family:inherit">No</button></div></div>`;
+    if(shF&&phase==="playing")h+=`<div class="hbb" style="position:relative;z-index:1">Hint — Optimal: <b>${opt?.toUpperCase()}</b></div>`;
+  }
+  h+=`<div style="flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1">`;
+  if(isBetting){
+    if(needsS())h+=`<div style="background:rgba(0,0,0,.3);border:1px solid #f1c40f66;border-radius:10px;padding:6px 12px;font-size:12px;color:#f1c40f;text-align:center;margin-bottom:6px">Shoe will be reshuffled</div>`;
+    h+=`<div style="text-align:center">`;
+    h+=`<div style="width:190px;height:190px;border-radius:50%;border:2px solid rgba(218,165,32,.25);margin:0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;${BC.length?'background:rgba(0,0,0,.12);border-color:rgba(218,165,32,.4)':''}">`;
+    if(!BC.length){
+      h+=`<div style="font-size:11px;color:rgba(218,165,32,.3);letter-spacing:1px">PLACE BET</div>`;
+    } else {
+      h+=`<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:3px">`;
+      const g={500:0,100:0,25:0};BC.forEach(c=>g[c.denom]++);
+      for(const d of DENOMS)for(let i=0;i<g[d];i++)h+=`<div class="bcs" style="background:${CBG[d]};color:${CTX[d]};width:42px;height:42px;font-size:10px">$${d}</div>`;
+      h+=`</div>`;
+      h+=`<div style="font-size:20px;font-weight:700;color:#f1c40f;font-family:Georgia,serif">$${cBet}</div>`;
+    }
+    h+=`</div>`;
+    if(cBet>0&&cBet<S.minBet)h+=`<div style="font-size:11px;color:#e74c3c;margin-top:4px">Min bet: $${S.minBet}</div>`;
+    h+=`</div>`;
+  } else {
+    PH.forEach((hand,hi)=>{
+      const isActive=phase==="playing"&&hi===AHI;
+      const isDimmed=phase==="playing"&&hi!==AHI;
+      const glowStyle=isActive&&PH.length>1?"animation:handGlow 1.5s ease-in-out infinite;":"";
+      const borderStyle=isActive&&PH.length>1?"border-color:rgba(218,165,32,.4);":"";
+      h+=`<div style="background:rgba(0,0,0,.15);border:1px solid rgba(218,165,32,.2);border-radius:12px;padding:10px;text-align:center;margin-bottom:6px;opacity:${isDimmed?0.45:1};${borderStyle}${glowStyle}">`;
+      if(PH.length>1)h+=`<div style="font-size:10px;color:rgba(218,165,32,.5);margin-bottom:4px">Hand ${hi+1} • $${HB[hi]}</div>`;
+      const v=hv(hand),sf=isS(hand)&&v<=21?" (soft)":"";
+      h+=`<div style="font-size:11px;color:rgba(218,165,32,.5);margin-bottom:6px;letter-spacing:1px">${PH.length===1?"YOUR HAND":""} • ${v}${sf}</div>`;
+      h+=`<div style="display:flex;justify-content:center;gap:6px">${hand.map(c=>cHTML(c)).join("")}</div></div>`;
+    });
+  }
   h+=`</div>`;
-  if(cashBal>0)h+=`<div style="text-align:center;font-size:11px;color:rgba(255,255,255,.45);padding-bottom:4px">+ $${cashBal.toFixed(2)} loose change</div>`;
-  else h+=`<div style="text-align:center;font-size:11px;color:rgba(255,255,255,.18);padding-bottom:4px">$0.00 loose change</div>`;
-  if(BR<S.minBet&&!BC.length)h+=`<div style="text-align:center;padding:8px 0"><button onclick="rGame()" style="padding:10px 24px;border-radius:10px;background:#c0392b;border:none;color:#fff;font-size:14px;cursor:pointer;font-family:inherit">Reset Bankroll</button></div>`;
-  h+=`</div>`;return h;
+  h+=`<div style="position:relative;z-index:1;flex-shrink:0;padding-bottom:4px">`;
+  if(isBetting){
+    const canD=cBet>=S.minBet,canR=BC.length>0;
+    h+=`<div style="display:flex;gap:6px;margin-bottom:6px">`;
+    h+=`<button onclick="resetBet()" ${canR?"":"disabled"} style="flex:1;padding:10px 0;border-radius:10px;border:1px solid ${canR?"#e74c3c44":"rgba(255,255,255,.05)"};font-size:12px;font-weight:700;cursor:${canR?"pointer":"not-allowed"};font-family:inherit;background:${canR?"rgba(231,76,60,.2)":"rgba(255,255,255,.03)"};color:${canR?"#e74c3c":"#444"}">RESET</button>`;
+    h+=`<button onclick="showCP=true;render()" style="flex:1;padding:10px 0;border-radius:10px;border:1px solid rgba(255,255,255,.08);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;background:rgba(255,255,255,.05);color:rgba(255,255,255,.4)">CHANGE</button>`;
+    h+=`<button onclick="deal()" ${canD?"":"disabled"} style="flex:2;padding:10px 0;border-radius:10px;border:none;font-size:14px;font-weight:700;cursor:${canD?"pointer":"not-allowed"};letter-spacing:1px;font-family:inherit;background:${canD?"linear-gradient(135deg,#27ae60,#1e8449)":"rgba(255,255,255,.05)"};color:${canD?"#fff":"#444"}">DEAL</button>`;
+    h+=`</div>`;
+    h+=`<div style="display:flex;justify-content:center;gap:14px;align-items:center">`;
+    for(const d of DENOMS.slice().reverse()){const cnt=CI[d];const op=cnt>0?"1":".25";
+      h+=`<div onclick="addCB(${d})" style="display:flex;flex-direction:column;align-items:center;cursor:pointer;opacity:${op}">`;
+      h+=`<div class="chip ${CCL[d]}" style="width:54px;height:54px;font-size:12px">$${d}</div>`;
+      h+=`<div style="font-size:9px;color:rgba(255,255,255,.4);font-weight:600;margin-top:2px">x${cnt}</div></div>`;}
+    h+=`</div>`;
+    if(cashBal>0)h+=`<div style="text-align:center;font-size:10px;color:rgba(255,255,255,.4);margin-top:3px">+$${cashBal.toFixed(2)} loose change</div>`;
+    else h+=`<div style="text-align:center;font-size:10px;color:rgba(255,255,255,.15);margin-top:3px">$0.00 loose change</div>`;
+    if(BR<S.minBet&&!BC.length)h+=`<div style="text-align:center;margin-top:6px"><button onclick="rGame()" style="padding:8px 20px;border-radius:10px;background:#c0392b;border:none;color:#fff;font-size:13px;cursor:pointer;font-family:inherit">Reset Bankroll</button></div>`;
+  } else if(phase==="playing"){
+    h+=`<div style="display:flex;flex-direction:column;gap:5px">`;
+    h+=`<div style="display:flex;gap:5px">${aBtn("HIT","#e74c3c","act('hit')")}${aBtn("STAND","#27ae60","act('stand')")}</div>`;
+    h+=`<div style="display:flex;gap:5px">`;
+    if(canDb())h+=aBtn("DOUBLE","#f39c12","act('double')");
+    if(canSp())h+=aBtn("SPLIT","#3498db","act('split')");
+    if(canSr())h+=aBtn("SURRENDER","#8e44ad","act('surrender')");
+    h+=`<button class="abtn" onclick="shF=true;render()" style="background:rgba(255,255,255,.07);border:1px solid #ffffff22;color:#aaa;font-size:13px">HINT</button>`;
+    h+=`</div></div>`;
+  } else if(phase==="result"){
+    h+=`<button class="dbtn" onclick="phase='betting';fb=null;shF=false;BC=[];cBet=0;render()" style="width:100%;background:linear-gradient(135deg,#2980b9,#1a5276);font-size:16px">NEXT HAND</button>`;
+  }
+  h+=`</div></div></div>`;
+  return h;
 }
 
 function rCPop(){
-  let h=`<div class="overlay" onclick="showCP=false;render()"><div class="popup" onclick="event.stopPropagation()"><h3>🔄 Change Chips</h3>`;
+  let h=`<div class="overlay" onclick="showCP=false;render()"><div class="popup" onclick="event.stopPropagation()"><h3>Change Chips</h3>`;
   h+=`<div style="font-size:11px;color:#7a8ba3;margin-bottom:6px;letter-spacing:.5px">BREAK DOWN</div>`;
   const c5=CI[500]>0,c1=CI[100]>0;
-  h+=`<div class="pcr"><div style="display:flex;align-items:center;gap:8px">${chipEl(500,36)}<span style="font-size:13px;color:#aaa">×${CI[500]}</span></div><button class="pbtn" onclick="breakChip(500)" ${c5?"":"disabled"} style="background:${c5?"#7B1FA2":"#222"};color:${c5?"#fff":"#555"}">→ 5×$100</button></div>`;
-  h+=`<div class="pcr"><div style="display:flex;align-items:center;gap:8px">${chipEl(100,36)}<span style="font-size:13px;color:#aaa">×${CI[100]}</span></div><button class="pbtn" onclick="breakChip(100)" ${c1?"":"disabled"} style="background:${c1?"#333":"#222"};color:${c1?"#f1c40f":"#555"}">→ 4×$25</button></div>`;
+  h+=`<div class="pcr"><div style="display:flex;align-items:center;gap:8px">${chipEl(500,36)}<span style="font-size:13px;color:#aaa">x${CI[500]}</span></div><button class="pbtn" onclick="breakChip(500)" ${c5?"":"disabled"} style="background:${c5?"#7B1FA2":"#222"};color:${c5?"#fff":"#555"}">5x$100</button></div>`;
+  h+=`<div class="pcr"><div style="display:flex;align-items:center;gap:8px">${chipEl(100,36)}<span style="font-size:13px;color:#aaa">x${CI[100]}</span></div><button class="pbtn" onclick="breakChip(100)" ${c1?"":"disabled"} style="background:${c1?"#333":"#222"};color:${c1?"#f1c40f":"#555"}">4x$25</button></div>`;
   h+=`<div style="font-size:11px;color:#7a8ba3;margin:12px 0 6px;letter-spacing:.5px">CONSOLIDATE</div>`;
   const cn1=CI[25]>=4,cn5=CI[100]>=5;
-  h+=`<div class="pcr"><div style="display:flex;align-items:center;gap:8px">${chipEl(25,36)}<span style="font-size:13px;color:#aaa">×${CI[25]}</span></div><button class="pbtn" onclick="consolidate(100)" ${cn1?"":"disabled"} style="background:${cn1?"#4CAF50":"#222"};color:${cn1?"#fff":"#555"}">4×$25 → $100</button></div>`;
-  h+=`<div class="pcr"><div style="display:flex;align-items:center;gap:8px">${chipEl(100,36)}<span style="font-size:13px;color:#aaa">×${CI[100]}</span></div><button class="pbtn" onclick="consolidate(500)" ${cn5?"":"disabled"} style="background:${cn5?"#333":"#222"};color:${cn5?"#f1c40f":"#555"}">5×$100 → $500</button></div>`;
+  h+=`<div class="pcr"><div style="display:flex;align-items:center;gap:8px">${chipEl(25,36)}<span style="font-size:13px;color:#aaa">x${CI[25]}</span></div><button class="pbtn" onclick="consolidate(100)" ${cn1?"":"disabled"} style="background:${cn1?"#4CAF50":"#222"};color:${cn1?"#fff":"#555"}">4x$25 = $100</button></div>`;
+  h+=`<div class="pcr"><div style="display:flex;align-items:center;gap:8px">${chipEl(100,36)}<span style="font-size:13px;color:#aaa">x${CI[100]}</span></div><button class="pbtn" onclick="consolidate(500)" ${cn5?"":"disabled"} style="background:${cn5?"#333":"#222"};color:${cn5?"#f1c40f":"#555"}">5x$100 = $500</button></div>`;
   h+=`<div style="text-align:center;margin-top:14px"><button onclick="showCP=false;render()" style="padding:8px 24px;border-radius:8px;background:#1a2744;border:1px solid #2a3f5f;color:#7a8ba3;font-size:13px;cursor:pointer;font-family:inherit">Close</button></div></div></div>`;return h;
 }
-
-function dealerSVG(){return`<svg width="60" height="70" viewBox="0 0 90 105" style="display:block;margin:0 auto"><ellipse cx="45" cy="32" rx="15" ry="17" fill="#e8b88a"/><ellipse cx="38" cy="30" rx="2.2" ry="2.5" fill="#2c1810"/><ellipse cx="52" cy="30" rx="2.2" ry="2.5" fill="#2c1810"/><path d="M41 38 Q45 42 49 38" fill="none" stroke="#2c1810" stroke-width="1.5" stroke-linecap="round"/><path d="M27 24 Q30 8 63 8 Q66 10 63 24 Q55 17 35 17 Z" fill="#1a1a2e"/><rect x="27" y="22" width="36" height="5" rx="1" fill="#1a1a2e"/><rect x="31" y="26" width="28" height="2" fill="#8b6914"/><path d="M33 50 Q45 46 57 50" fill="#e8b88a"/><rect x="30" y="50" width="30" height="55" rx="3" fill="#1a1a2e"/><rect x="30" y="50" width="30" height="9" fill="#fff" opacity="0.9"/><line x1="45" y1="59" x2="45" y2="105" stroke="#8b6914" stroke-width="2"/><rect x="42" y="59" width="6" height="5" rx="1" fill="#c0392b"/></svg>`;}
-
-function rTable(){
-  const opt=phase==="playing"?gOpt():null;
-  const totalBet=HB.reduce((s,b)=>s+b,0);
-  let h=`<div class="felt" style="flex:1;display:flex;flex-direction:column;padding:8px 12px;gap:4px;overflow:auto">${feltBg()}`;
-  h+=`<div style="display:flex;justify-content:space-between;align-items:center"><div class="bet-badge">Bet: $${totalBet}</div><div class="bet-badge" style="color:#aaa;border-color:rgba(255,255,255,.1)">Bank: $${cT(CI)}</div></div>`;
-  // Dealer area with SVG character
-  h+=`<div style="text-align:center">${dealerSVG()}<div style="font-size:11px;color:rgba(255,255,255,.55);margin:2px 0 4px;letter-spacing:1px">DEALER ${phase==="dealer"||phase==="result"?"• "+hv(DC):""}</div><div style="display:flex;justify-content:center;gap:6px">`;
-  DC.forEach((c,i)=>{h+=cHTML(c,i===1&&(phase==="playing"||phase==="insurance"));});h+=`</div></div>`;
-  // Feedback/result/insurance/hint
-  if(fb)h+=`<div class="fbb" style="border:1px solid ${fb.color}55"><span style="font-weight:700;color:${fb.color};font-size:14px">${fb.label}</span><span style="font-size:12px;color:#bbb;margin-left:8px">${fb.message}</span></div>`;
-  if(phase==="result"&&rMsg)h+=`<div class="rbb">${rMsg}</div>`;
-  if(phase==="insurance")h+=`<div class="ibb"><div style="font-size:14px;font-weight:600;color:#bb8fce;margin-bottom:8px">Insurance? (Half your bet)</div><div style="display:flex;gap:10px;justify-content:center"><button onclick="insure(true)" style="padding:10px 24px;border-radius:8px;background:#8e44ad;border:none;color:#fff;font-weight:600;cursor:pointer;font-family:inherit">Yes</button><button onclick="insure(false)" style="padding:10px 24px;border-radius:8px;background:#2c3e50;border:none;color:#fff;font-weight:600;cursor:pointer;font-family:inherit">No</button></div></div>`;
-  if(shF&&phase==="playing")h+=`<div class="hbb">Hint — Optimal: <b>${opt?.toUpperCase()}</b></div>`;
-  // Player hands in gold card tray
-  h+=`<div style="margin-top:4px">`;
-  PH.forEach((hand,hi)=>{
-    const isActive=phase==="playing"&&hi===AHI;
-    const isDimmed=phase==="playing"&&hi!==AHI;
-    const glowStyle=isActive&&PH.length>1?"animation:handGlow 1.5s ease-in-out infinite;":"";
-    const borderStyle=isActive&&PH.length>1?"border-color:rgba(218,165,32,.4);":"";
-    h+=`<div style="background:rgba(0,0,0,.15);border:1px solid rgba(218,165,32,.2);border-radius:12px;padding:10px;text-align:center;margin-bottom:6px;opacity:${isDimmed?0.45:1};${borderStyle}${glowStyle}">`;
-    if(PH.length>1)h+=`<div style="font-size:10px;color:rgba(218,165,32,.5);margin-bottom:4px">Hand ${hi+1} • $${HB[hi]}</div>`;
-    const v=hv(hand),sf=isS(hand)&&v<=21?" (soft)":"";
-    h+=`<div style="font-size:11px;color:rgba(218,165,32,.5);margin-bottom:6px;letter-spacing:1px">${PH.length===1?"YOUR HAND":""} • ${v}${sf}</div>`;
-    h+=`<div style="display:flex;justify-content:center;gap:6px">${hand.map(c=>cHTML(c)).join("")}</div></div>`;
-  });
-  h+=`</div>`;
-  // Action buttons
-  if(phase==="playing"){h+=`<div style="display:flex;flex-direction:column;gap:6px;margin-top:auto;padding-bottom:4px"><div style="display:flex;gap:6px">${aBtn("HIT","#e74c3c","act('hit')")}${aBtn("STAND","#27ae60","act('stand')")}</div><div style="display:flex;gap:6px">`;if(canDb())h+=aBtn("DOUBLE","#f39c12","act('double')");if(canSp())h+=aBtn("SPLIT","#3498db","act('split')");if(canSr())h+=aBtn("SURRENDER","#8e44ad","act('surrender')");h+=`<button class="abtn" onclick="shF=true;render()" style="background:rgba(255,255,255,.07);border:1px solid #ffffff22;color:#aaa;font-size:13px">HINT</button></div></div>`;}
-  if(phase==="result")h+=`<div style="margin-top:auto;padding-bottom:4px"><button class="dbtn" onclick="phase='betting';fb=null;shF=false;BC=[];cBet=0;render()" style="width:100%;background:linear-gradient(135deg,#2980b9,#1a5276);font-size:16px">NEXT HAND</button></div>`;
-  h+=`</div>`;return h;
-}
-
 function aBtn(l,c,oc){return`<button class="abtn" onclick="${oc}" style="background:linear-gradient(135deg,${c},${c}bb);box-shadow:0 3px 12px ${c}44">${l}</button>`;}
 
 function rRules(){
