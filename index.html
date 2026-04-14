@@ -384,7 +384,7 @@ function rPlay(){
     h+=`</div>`;
     if(cashBal>0)h+=`<div style="text-align:center;font-size:10px;color:rgba(255,255,255,.4);margin-top:3px">+$${cashBal.toFixed(2)} loose change</div>`;
     else h+=`<div style="text-align:center;font-size:10px;color:rgba(255,255,255,.15);margin-top:3px">$0.00 loose change</div>`;
-    if(BR<S.minBet&&!BC.length)h+=`<div style="text-align:center;margin-top:6px"><button onclick="rGame()" style="padding:8px 20px;border-radius:10px;background:#c0392b;border:none;color:#fff;font-size:13px;cursor:pointer;font-family:inherit">Reset Bankroll</button></div>`;
+    if(BR<S.minBet&&!BC.length)h+=`<div style="text-align:center;margin-top:10px;background:rgba(0,0,0,.4);border:1px solid #c0392b55;border-radius:12px;padding:14px 16px"><div style="font-size:16px;font-weight:700;color:#e74c3c;margin-bottom:4px">Out of chips!</div><div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:10px">You don't have enough to place the minimum bet of $${S.minBet}.</div><button onclick="rGame()" style="padding:10px 28px;border-radius:10px;background:linear-gradient(135deg,#c0392b,#962d22);border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Buy Back In — $${S.startingBankroll}</button></div>`;
   } else if(phase==="playing"){
     h+=`<div style="display:flex;flex-direction:column;gap:5px">`;
     h+=`<div style="display:flex;gap:5px">${aBtn("HIT","#e74c3c","act('hit')")}${aBtn("STAND","#27ae60","act('stand')")}</div>`;
