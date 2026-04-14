@@ -169,8 +169,44 @@ function dui(r){const v=cv(r);return v===11?9:v-2;}
 
 function gOA(pc,du,cs,cd2,cr){const i=dui(du),t=hv(pc);if(cs&&isP(pc)){const pr=cv(pc[0].rank)===11?11:cv(pc[0].rank);if(PAIR[pr]?.[i]==="P")return"split";}let a;if(isS(pc))a=SOFT[t]?.[i]||"S";else a=HARD[t]?.[i]||(t<=11?"H":"S");if(a==="D"&&!cd2)return"hit";if(a==="DS"&&!cd2)return"stand";if(a==="D"||a==="DS")return"double";if(a==="R")return cr?"surrender":"hit";if(a==="RS")return cr?"surrender":"stand";return a==="H"?"hit":"stand";}
 
-function gEV(a,pt,du){const i=dui(du);const bp=[.353,.373,.394,.416,.423,.26,.245,.233,.231,.116][i];if(a==="hit"&&pt>=17)return-.45;if(a==="stand"&&pt<=11)return-.35;if(a==="hit"&&pt>=13&&bp>.35)return-.15;if(a==="stand"&&pt<=16&&bp<.28)return-.2;return-.08;}
-function rM(pa,oa,pc,du,bet){if(pa===oa)return{rating:"good",label:"Perfect",evCost:0,color:"#27ae60"};const t=hv(pc);const ev=Math.abs(gEV(pa,t,du))*bet;if([pa==="hit"&&oa==="double",pa==="stand"&&oa==="surrender",pa==="hit"&&oa==="split"&&t<=16].some(Boolean))return{rating:"medium",label:"Okay",evCost:ev,color:"#f39c12"};return{rating:"bad",label:"Mistake",evCost:ev,color:"#e74c3c"};}
+function getReason(optAction,pc,du){
+  const t=hv(pc),soft=isS(pc),pair=isP(pc),di=dui(du),dv=cv(du),weak=dv>=2&&dv<=6;
+  // Pairs
+  if(pair){
+    const pv=cv(pc[0].rank);
+    if(pv===11)return"Two chances at 21 is far better than a soft 12.";
+    if(pv===8)return"16 is the worst hand in blackjack. Two fresh 8s give you a much better chance.";
+    if(pv===10)return"20 is an excellent hand. Splitting throws away a near-certain win.";
+    if(pv===5)return"Treat 5-5 as a hard 10. Doubling is much stronger than splitting into two weak hands.";
+    if(optAction==="split")return weak?"Low pairs against a weak dealer give you two chances to beat a likely bust.":"Split this pair to improve your chances against this dealer card.";
+    if(pv<=7&&!weak)return"Don't split against a strong dealer — it doubles your exposure. Play as a hard total.";
+  }
+  // Soft hands
+  if(soft){
+    if(t>=19)return"Soft 19+ is too strong to risk changing.";
+    if(t===18&&weak&&optAction==="double")return"Soft 18 against a weak dealer is a great double — you can't bust and the dealer is likely to lose.";
+    if(t===18&&!weak&&optAction==="hit")return"Soft 18 isn't strong enough vs a strong dealer. Being soft means you can safely try to improve.";
+    if(t===18)return"Soft 18 is solid against this dealer card.";
+    if(optAction==="double")return"Your soft hand can't bust, and the dealer's weak card makes this a profitable double.";
+    return"Soft "+t+" or less should always try to improve. You can't bust a soft hand.";
+  }
+  // Hard hands
+  if(t>=17)return"17+ is a made hand. Hitting risks busting with very little to gain.";
+  if(optAction==="surrender"&&t===16)return"16 vs a strong dealer loses more than half the time. Saving half your bet is the best outcome.";
+  if(optAction==="surrender"&&t===15)return"15 vs a 10 is a losing hand. Giving up half beats playing it out.";
+  if(t>=13&&t<=16&&weak)return"Dealer shows a weak card (2-6) and is likely to bust. Don't risk busting yourself.";
+  if(t>=13&&t<=16&&!weak)return"Dealer's strong upcard (7+) likely makes a made hand. Standing on a stiff total loses more often.";
+  if(t===12&&(dv===2||dv===3))return"12 vs 2 or 3 is an exception — the dealer isn't weak enough to count on busting, and only a 10 busts you.";
+  if(t===12&&weak)return"Stand — the dealer is weak and likely to bust. Let them take the risk.";
+  if(t===12)return"Hit — the dealer is strong and 12 isn't enough to compete.";
+  if(optAction==="double"&&(t===10||t===11))return(t===11?"11":"10")+" is the best doubling hand. High chance of making "+(t===11?"21":"20")+" with one card.";
+  if(optAction==="double"&&t===9)return"9 is strong against a weak dealer. One more card likely gives you 19-20.";
+  if(optAction==="hit"&&t>=9&&t<=11)return"Doubling would be ideal here, but hitting is the next best play.";
+  if(t<=8)return"Your total is too low to stand. You can't bust, so take another card.";
+  return"Play according to basic strategy for the best long-term results.";
+}
+
+function rM(pa,oa,pc,du,bet){if(pa===oa)return{rating:"good",label:"Perfect",color:"#27ae60"};if([pa==="hit"&&oa==="double",pa==="stand"&&oa==="surrender",pa==="hit"&&oa==="split"&&hv(pc)<=16].some(Boolean))return{rating:"medium",label:"Okay",color:"#f39c12"};return{rating:"bad",label:"Mistake",color:"#e74c3c"};}
 
 function mkShoe(n){const s=[];for(let d=0;d<n;d++)for(const su of SUITS)for(const r of RANKS)s.push({rank:r,suit:su});for(let i=s.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[s[i],s[j]]=[s[j],s[i]];}return s;}
 function rShuf(){shoe=mkShoe(S.numDecks);cd=0;}
@@ -245,12 +281,12 @@ function gOpt(){const h=PH[AHI];if(!h||!h.length||!DC[0])return"stand";return gO
 
 function deal(){if(cBet<S.minBet){toast(`Min bet: $${S.minBet}`,"#e74c3c");return;}if(needsS()){rShuf();resetCount();}fb=null;shF=false;rMsg="";countFb=null;const bet=cBet;const p1=draw(),d1=draw(),p2=draw(),d2=draw();PH=[[p1,p2]];DC=[d1,d2];HB=[bet];AHI=0;BR=cT(CI);sndDeal();countCard(p1);countCard(d1);countCard(p2);if(d1.rank==="A"){phase="insurance";render();return;}if(hv([p1,p2])===21){phase="dealer";render();setTimeout(resolveStep,S.cardDelay);return;}phase="playing";render();}
 
-function insure(take){const cost=HB[0]/2;if(take){deductInv(cost);fb={rating:"bad",label:"Mistake",evCost:cost*.077,message:"Insurance has ~7.7% house edge. Always decline.",color:"#e74c3c"};}else fb={rating:"good",label:"Perfect",evCost:0,message:"Correct! Insurance is a sucker bet.",color:"#27ae60"};if(hv(DC)===21){if(take)addInv(cost*3);phase="dealer";render();setTimeout(finishResolve,S.cardDelay);return;}if(hv(PH[0])===21){phase="dealer";render();setTimeout(resolveStep,S.cardDelay);return;}phase="playing";render();}
+function insure(take){const cost=HB[0]/2;if(take){deductInv(cost);fb={rating:"bad",label:"Mistake",message:"Should decline — insurance has a ~7.7% house edge. It's a side bet that loses long-term.",color:"#e74c3c"};}else fb={rating:"good",label:"Perfect",message:"Decline is correct — insurance has a ~7.7% house edge regardless of your hand.",color:"#27ae60"};fbId++;if(hv(DC)===21){if(take)addInv(cost*3);phase="dealer";render();setTimeout(finishResolve,S.cardDelay);return;}if(hv(PH[0])===21){phase="dealer";render();setTimeout(resolveStep,S.cardDelay);return;}phase="playing";render();}
 
 function recD(a,o){const ic=a===o;ST.td++;if(ic)ST.pd++;if(ST.d[a]){ST.d[a].t++;if(ic)ST.d[a].c++;}if(!ic){MK.unshift({pc:[...PH[AHI]],du:DC[0],ym:a,om:o});if(MK.length>10)MK.length=10;}}
 
 let acting=false,lastFbId=0,fbId=0;
-function act(a){if(acting)return;const o=gOpt(),h=PH[AHI],bet=HB[AHI];const mr=rM(a,o,h,DC[0].rank,bet);let msg;if(mr.rating==="good")msg=`${a[0].toUpperCase()+a.slice(1)} is the optimal play here.`;else if(mr.rating==="medium")msg=`Optimal was ${o}. EV cost: ~$${mr.evCost.toFixed(2)}.`;else msg=`Should have ${o}. EV cost: ~$${mr.evCost.toFixed(2)}.`;fb={...mr,message:msg};fbId++;recD(a,o);shF=false;
+function act(a){if(acting)return;const o=gOpt(),h=PH[AHI],bet=HB[AHI];const mr=rM(a,o,h,DC[0].rank,bet);const reason=getReason(o,h,DC[0].rank);let msg;if(mr.rating==="good")msg=`${a[0].toUpperCase()+a.slice(1)} is correct — ${reason}`;else msg=`Should ${o} — ${reason}`;fb={...mr,message:msg};fbId++;recD(a,o);shF=false;
 if(a==="hit"){acting=true;render();setTimeout(()=>{const nc=draw();PH[AHI]=[...h,nc];countCard(nc);sndCard();acting=false;if(hv(PH[AHI])>21)sndBust();if(hv(PH[AHI])>=21)advance();else render();},S.cardDelay);}
 else if(a==="stand")advance();
 else if(a==="double"){deductInv(bet);HB[AHI]=bet*2;acting=true;render();setTimeout(()=>{const nc=draw();PH[AHI]=[...h,nc];countCard(nc);sndCard();acting=false;advance();},S.cardDelay);}
@@ -510,7 +546,26 @@ function rRules(){
   h+=sec("Using the Count","<b style=\"color:#f1c40f\">Bet sizing</b> — This is where the money is made. Bet more when the TC is high (+2 or above), bet minimum when it's low or negative.<br><br><b style=\"color:#f1c40f\">Strategy deviations</b> — Some plays change at high counts. For example, take insurance at TC +3 (normally always decline), stand on 16 vs 10 at higher counts, or double on hands you normally wouldn't.<br><br><b style=\"color:#f1c40f\">Important</b> — Only count cards you can see. The dealer's face-down hole card is not counted until it's revealed.");
   h+=`<h2 style="color:#f1c40f;font-size:18px;margin:20px 0 12px;font-family:Georgia,serif">Basic Strategy Chart</h2>`;
   h+=`<div style="font-size:11px;color:#888;margin-bottom:8px">${S.numDecks} decks • ${S.penetration}% penetration • Dealer ${S.dealerHitsSoft17?"hits":"stands on"} soft 17 • BJ pays ${S.blackjackPays===1.5?"3:2":S.blackjackPays===1.2?"6:5":"2:1"}</div>`;
-  h+=rChart()+`</div>`;return h;
+  h+=rChart();
+  h+=`<h2 style="color:#f1c40f;font-size:18px;margin:20px 0 12px;font-family:Georgia,serif">Glossary</h2>`;
+  const gl=[
+    ["Bust","Going over 21 — an automatic loss."],
+    ["Push","Tie with the dealer. Your bet is returned."],
+    ["Shoe","The multi-deck container cards are dealt from."],
+    ["Penetration","How deep into the shoe the dealer deals before reshuffling."],
+    ["Hard hand","A hand without an ace counting as 11 (e.g., 10+7 = hard 17)."],
+    ["Soft hand","A hand with an ace counting as 11 (e.g., A+6 = soft 17). Can't bust with one hit."],
+    ["Stiff hand","Hard 12–16. Risky to hit, risky to stand — the toughest hands in blackjack."],
+    ["Made hand","Hard 17 or higher. A completed hand you should almost never hit."],
+    ["Upcard","The dealer's visible face-up card."],
+    ["Hole card","The dealer's hidden face-down card, revealed after your turn."],
+    ["Running count","Cumulative Hi-Lo count of all visible cards dealt from the shoe."],
+    ["True count","Running count divided by estimated decks remaining. The real measure of advantage."],
+    ["Bankroll","Your total money available for play."],
+    ["Bet spread","The range between your minimum and maximum bets, used in counting to exploit favorable shoes."]
+  ];
+  gl.forEach(([t,d])=>{h+=`<div style="margin-bottom:8px"><span style="color:#f1c40f;font-weight:700;font-size:13px">${t}</span><span style="color:#a09d93;font-size:13px"> — ${d}</span></div>`;});
+  h+=`</div>`;return h;
 }
 function sec(t,b){return`<div class="rs"><div class="rst">${t}</div><div class="rsb">${b}</div></div>`;}
 
@@ -525,7 +580,7 @@ function rChart(){
   h+=`<div style="font-size:12px;font-weight:600;color:#e8e6df;margin:10px 0 4px">Pairs</div>`+hdr();
   for(let v=2;v<=10;v++)h+=row(`${v},${v}`,PAIR[v]);h+=row("A,A",PAIR[11]);
   h+=`<div class="lg">`;[["H","Hit"],["S","Stand"],["D","Double"],["P","Split"],["R","Surr/Hit"],["RS","Surr/Stand"],["DS","Dbl/Stand"]].forEach(([k,v])=>{h+=`<div class="li"><div class="ls" style="background:${CM[k]||"#555"}cc"></div><span style="color:#aaa">${v}</span></div>`;});
-  h+=`</div></div>`;return h;
+  h+=`</div><div style="font-size:11px;color:#a09d93;margin-top:6px;line-height:1.5"><b style="color:#c8c4b8">DS</b> = Double if allowed, otherwise Stand. <b style="color:#c8c4b8">RS</b> = Surrender if allowed, otherwise Stand.</div></div>`;return h;
 }
 
 function rStPg(){
