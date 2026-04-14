@@ -30,7 +30,7 @@
   .card .rk{font-weight:700;line-height:1}.card .su{line-height:1;margin-top:1px}
   .abtn{flex:1;padding:14px 0;border-radius:10px;border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.5px;font-family:inherit}
   .dbtn{width:80%;padding:16px 0;border-radius:12px;border:none;color:#fff;font-size:18px;font-weight:700;cursor:pointer;letter-spacing:1px;font-family:inherit}
-  .fbb{border-radius:10px;padding:8px 12px;text-align:center;animation:fadeIn .3s ease;background:rgba(0,0,0,.4)}
+  .fbb{border-radius:10px;padding:8px 12px;text-align:center;background:rgba(0,0,0,.4)}
   .rbb{background:rgba(0,0,0,.4);border:1px solid #f1c40f55;border-radius:10px;padding:10px 14px;text-align:center;font-size:15px;font-weight:600;color:#f1c40f}
   .hbb{background:rgba(0,0,0,.4);border:1px solid #3498db77;border-radius:10px;padding:8px 12px;text-align:center;font-size:13px;color:#5dade2}
   .ibb{background:rgba(0,0,0,.4);border:1px solid #9b59b699;border-radius:10px;padding:12px 14px;text-align:center}
@@ -91,7 +91,7 @@ const HARD={5:["H","H","H","H","H","H","H","H","H","H"],6:["H","H","H","H","H","
 const SOFT={13:["H","H","H","D","D","H","H","H","H","H"],14:["H","H","H","D","D","H","H","H","H","H"],15:["H","H","D","D","D","H","H","H","H","H"],16:["H","H","D","D","D","H","H","H","H","H"],17:["H","D","D","D","D","H","H","H","H","H"],18:["DS","DS","DS","DS","DS","S","S","H","H","H"],19:["S","S","S","S","DS","S","S","S","S","S"],20:["S","S","S","S","S","S","S","S","S","S"],21:["S","S","S","S","S","S","S","S","S","S"]};
 const PAIR={2:["P","P","P","P","P","P","H","H","H","H"],3:["P","P","P","P","P","P","H","H","H","H"],4:["H","H","H","P","P","H","H","H","H","H"],5:["D","D","D","D","D","D","D","D","H","H"],6:["P","P","P","P","P","H","H","H","H","H"],7:["P","P","P","P","P","P","H","H","H","H"],8:["P","P","P","P","P","P","P","P","P","P"],9:["P","P","P","P","P","S","P","P","S","S"],10:["S","S","S","S","S","S","S","S","S","S"],11:["P","P","P","P","P","P","P","P","P","P"]};
 
-let S={numDecks:6,penetration:75,startingBankroll:1000,minBet:25,maxBet:500,dealerHitsSoft17:true,blackjackPays:1.5,soundOn:false};
+let S={numDecks:6,penetration:75,startingBankroll:1000,minBet:25,maxBet:500,dealerHitsSoft17:true,blackjackPays:1.5,soundOn:false,cardDelay:1000};
 let shoe=[],cd=0,BR=1000,cBet=0;
 let CI={25:0,100:0,500:0},BC=[],cashBal=0;
 let phase="betting",PH=[[]],AHI=0,DC=[],HB=[0];
@@ -190,35 +190,53 @@ function canDb(){const h=PH[AHI];return h&&h.length===2&&cT(CI)>=HB[AHI];}
 function canSr(){const h=PH[AHI];return h&&h.length===2&&PH.length===1;}
 function gOpt(){const h=PH[AHI];if(!h||!h.length||!DC[0])return"stand";return gOA(h,DC[0].rank,canSp(),canDb(),canSr());}
 
-function deal(){if(cBet<S.minBet){toast(`Min bet: $${S.minBet}`,"#e74c3c");return;}if(needsS())rShuf();fb=null;shF=false;rMsg="";const bet=cBet;const p1=draw(),d1=draw(),p2=draw(),d2=draw();PH=[[p1,p2]];DC=[d1,d2];HB=[bet];AHI=0;BR=cT(CI);sndDeal();if(d1.rank==="A"){phase="insurance";render();return;}if(hv([p1,p2])===21){phase="dealer";render();setTimeout(resolve,400);return;}phase="playing";render();}
+function deal(){if(cBet<S.minBet){toast(`Min bet: $${S.minBet}`,"#e74c3c");return;}if(needsS())rShuf();fb=null;shF=false;rMsg="";const bet=cBet;const p1=draw(),d1=draw(),p2=draw(),d2=draw();PH=[[p1,p2]];DC=[d1,d2];HB=[bet];AHI=0;BR=cT(CI);sndDeal();if(d1.rank==="A"){phase="insurance";render();return;}if(hv([p1,p2])===21){phase="dealer";render();setTimeout(resolveStep,S.cardDelay);return;}phase="playing";render();}
 
-function insure(take){const cost=HB[0]/2;if(take){deductInv(cost);fb={rating:"bad",label:"Mistake",evCost:cost*.077,message:"Insurance has ~7.7% house edge. Always decline.",color:"#e74c3c"};}else fb={rating:"good",label:"Perfect",evCost:0,message:"Correct! Insurance is a sucker bet.",color:"#27ae60"};if(hv(DC)===21){if(take)addInv(cost*3);phase="dealer";render();setTimeout(resolve,600);return;}if(hv(PH[0])===21){phase="dealer";render();setTimeout(resolve,400);return;}phase="playing";render();}
+function insure(take){const cost=HB[0]/2;if(take){deductInv(cost);fb={rating:"bad",label:"Mistake",evCost:cost*.077,message:"Insurance has ~7.7% house edge. Always decline.",color:"#e74c3c"};}else fb={rating:"good",label:"Perfect",evCost:0,message:"Correct! Insurance is a sucker bet.",color:"#27ae60"};if(hv(DC)===21){if(take)addInv(cost*3);phase="dealer";render();setTimeout(finishResolve,S.cardDelay);return;}if(hv(PH[0])===21){phase="dealer";render();setTimeout(resolveStep,S.cardDelay);return;}phase="playing";render();}
 
 function recD(a,o){const ic=a===o;ST.td++;if(ic)ST.pd++;if(ST.d[a]){ST.d[a].t++;if(ic)ST.d[a].c++;}if(!ic){MK.unshift({pc:[...PH[AHI]],du:DC[0],ym:a,om:o});if(MK.length>10)MK.length=10;}}
 
-function act(a){const o=gOpt(),h=PH[AHI],bet=HB[AHI];const mr=rM(a,o,h,DC[0].rank,bet);let msg;if(mr.rating==="good")msg=`${a[0].toUpperCase()+a.slice(1)} is the optimal play here.`;else if(mr.rating==="medium")msg=`Optimal was ${o}. EV cost: ~$${mr.evCost.toFixed(2)}.`;else msg=`Should have ${o}. EV cost: ~$${mr.evCost.toFixed(2)}.`;fb={...mr,message:msg};recD(a,o);shF=false;
-if(a==="hit"){PH[AHI]=[...h,draw()];sndCard();if(hv(PH[AHI])>21)sndBust();if(hv(PH[AHI])>=21)advance();else render();}
+let acting=false,lastFbId=0,fbId=0;
+function act(a){if(acting)return;const o=gOpt(),h=PH[AHI],bet=HB[AHI];const mr=rM(a,o,h,DC[0].rank,bet);let msg;if(mr.rating==="good")msg=`${a[0].toUpperCase()+a.slice(1)} is the optimal play here.`;else if(mr.rating==="medium")msg=`Optimal was ${o}. EV cost: ~$${mr.evCost.toFixed(2)}.`;else msg=`Should have ${o}. EV cost: ~$${mr.evCost.toFixed(2)}.`;fb={...mr,message:msg};fbId++;recD(a,o);shF=false;
+if(a==="hit"){acting=true;render();setTimeout(()=>{PH[AHI]=[...h,draw()];sndCard();acting=false;if(hv(PH[AHI])>21)sndBust();if(hv(PH[AHI])>=21)advance();else render();},S.cardDelay);}
 else if(a==="stand")advance();
-else if(a==="double"){deductInv(bet);HB[AHI]=bet*2;PH[AHI]=[...h,draw()];sndCard();advance();}
-else if(a==="split"){deductInv(bet);const c1=h[0],c2=h[1];PH[AHI]=[c1,draw()];PH.splice(AHI+1,0,[c2,draw()]);HB.splice(AHI+1,0,bet);sndCard();if(c1.rank==="A"){advance(AHI+2);return;}if(hv(PH[AHI])===21)advance();else render();}
+else if(a==="double"){deductInv(bet);HB[AHI]=bet*2;acting=true;render();setTimeout(()=>{PH[AHI]=[...h,draw()];sndCard();acting=false;advance();},S.cardDelay);}
+else if(a==="split"){deductInv(bet);acting=true;render();setTimeout(()=>{const c1=h[0],c2=h[1];PH[AHI]=[c1,draw()];PH.splice(AHI+1,0,[c2,draw()]);HB.splice(AHI+1,0,bet);sndCard();acting=false;if(c1.rank==="A"){advance(AHI+2);return;}if(hv(PH[AHI])===21)advance();else render();},S.cardDelay);}
 else if(a==="surrender"){addInv(bet/2);HB[AHI]=0;rMsg="Hand surrendered. Half bet returned.";phase="result";ST.hp++;ST.hl++;ST.tb+=bet;BR=cT(CI);render();}}
 
-function advance(fi){const ni=fi!==undefined?fi:AHI+1;if(ni<PH.length){AHI=ni;render();return;}phase="dealer";render();setTimeout(resolve,400);}
+function advance(fi){const ni=fi!==undefined?fi:AHI+1;if(ni<PH.length){AHI=ni;render();return;}phase="dealer";render();setTimeout(resolveStep,S.cardDelay);}
 
-function resolve(){let dc=[...DC];if(!PH.every((h,i)=>hv(h)>21||HB[i]===0)){while(hv(dc)<17||(S.dealerHitsSoft17&&hv(dc)===17&&isS(dc)))dc=[...dc,draw()];}DC=dc;const dt=hv(dc),dbj=dc.length===2&&dt===21;let res=[];
-PH.forEach((h,i)=>{const bet=HB[i];if(!bet)return;const pt=hv(h),pbj=h.length===2&&pt===21&&PH.length===1;ST.hp++;ST.tb+=bet;
-if(pt>21){res.push({i,r:"bust"});ST.hl++;}
-else if(pbj&&dbj){res.push({i,r:"push"});addInv(bet);ST.hpu++;}
-else if(pbj){const p=bet+bet*S.blackjackPays;res.push({i,r:"bj",p});addInv(p);ST.hw++;ST.bj++;ST.tw+=p;}
-else if(dbj){res.push({i,r:"lose"});ST.hl++;}
-else if(dt>21){res.push({i,r:"win"});addInv(bet*2);ST.hw++;ST.tw+=bet*2;}
-else if(pt>dt){res.push({i,r:"win"});addInv(bet*2);ST.hw++;ST.tw+=bet*2;}
-else if(pt===dt){res.push({i,r:"push"});addInv(bet);ST.hpu++;}
-else{res.push({i,r:"lose"});ST.hl++;}});
-BR=cT(CI);rMsg=res.map(r=>{if(r.r==="bj")return`Blackjack! +$${(r.p-HB[r.i]).toFixed(0)}`;if(r.r==="win")return`Win! +$${HB[r.i]}`;if(r.r==="push")return"Push.";if(r.r==="bust")return`Bust! -$${HB[r.i]}`;return`Lose. -$${HB[r.i]}`;}).join(" | ");
-const hasWin=res.some(r=>r.r==="win"),hasBJ=res.some(r=>r.r==="bj"),hasLose=res.some(r=>r.r==="lose"||r.r==="bust");
-if(hasBJ)sndBJ();else if(hasWin)sndWin();else if(hasLose)sndLose();
-phase="result";render();}
+function resolveStep(){
+  // First call: hole card is revealed (phase=dealer means faceDown=false)
+  // Check if all player hands busted
+  const allBusted=PH.every((h,i)=>hv(h)>21||HB[i]===0);
+  if(allBusted){finishResolve();return;}
+  // Check if dealer needs to draw
+  const needsHit=hv(DC)<17||(S.dealerHitsSoft17&&hv(DC)===17&&isS(DC));
+  if(needsHit){
+    DC=[...DC,draw()];sndCard();render();
+    setTimeout(resolveStep,S.cardDelay);
+  } else {
+    finishResolve();
+  }
+}
+
+function finishResolve(){
+  const dt=hv(DC),dbj=DC.length===2&&dt===21;let res=[];
+  PH.forEach((h,i)=>{const bet=HB[i];if(!bet)return;const pt=hv(h),pbj=h.length===2&&pt===21&&PH.length===1;ST.hp++;ST.tb+=bet;
+  if(pt>21){res.push({i,r:"bust"});ST.hl++;}
+  else if(pbj&&dbj){res.push({i,r:"push"});addInv(bet);ST.hpu++;}
+  else if(pbj){const p=bet+bet*S.blackjackPays;res.push({i,r:"bj",p});addInv(p);ST.hw++;ST.bj++;ST.tw+=p;}
+  else if(dbj){res.push({i,r:"lose"});ST.hl++;}
+  else if(dt>21){res.push({i,r:"win"});addInv(bet*2);ST.hw++;ST.tw+=bet*2;}
+  else if(pt>dt){res.push({i,r:"win"});addInv(bet*2);ST.hw++;ST.tw+=bet*2;}
+  else if(pt===dt){res.push({i,r:"push"});addInv(bet);ST.hpu++;}
+  else{res.push({i,r:"lose"});ST.hl++;}});
+  BR=cT(CI);rMsg=res.map(r=>{if(r.r==="bj")return`Blackjack! +$${(r.p-HB[r.i]).toFixed(0)}`;if(r.r==="win")return`Win! +$${HB[r.i]}`;if(r.r==="push")return"Push.";if(r.r==="bust")return`Bust! -$${HB[r.i]}`;return`Lose. -$${HB[r.i]}`;}).join(" | ");
+  const hasWin=res.some(r=>r.r==="win"),hasBJ=res.some(r=>r.r==="bj"),hasLose=res.some(r=>r.r==="lose"||r.r==="bust");
+  if(hasBJ)sndBJ();else if(hasWin)sndWin();else if(hasLose)sndLose();
+  phase="result";render();
+}
 
 function rGame(){BR=S.startingBankroll;phase="betting";PH=[[]];DC=[];HB=[0];fb=null;rMsg="";cBet=0;BC=[];CI=b2c(BR);cashBal=0;rShuf();toast("Settings applied — game reset!","#f1c40f");render();}
 function rStats(){ST={hp:0,hw:0,hl:0,hpu:0,bj:0,tb:0,tw:0,d:{hit:{c:0,t:0},stand:{c:0,t:0},double:{c:0,t:0},split:{c:0,t:0},surrender:{c:0,t:0}},pd:0,td:0};MK=[];toast("Stats cleared!","#e74c3c");render();}
@@ -296,7 +314,7 @@ function rPlay(){
     h+=`<div style="text-align:center;position:relative;z-index:1"><div style="font-size:9px;color:rgba(218,165,32,.2);letter-spacing:2px;margin:4px 0">DEALER</div></div>`;
   }
   if(!isBetting){
-    if(fb)h+=`<div class="fbb" style="border:1px solid ${fb.color}55;position:relative;z-index:1"><span style="font-weight:700;color:${fb.color};font-size:14px">${fb.label}</span><span style="font-size:12px;color:#bbb;margin-left:8px">${fb.message}</span></div>`;
+    if(fb){const anim=fbId!==lastFbId?"animation:fadeIn .3s ease;":"";lastFbId=fbId;h+=`<div class="fbb" style="border:1px solid ${fb.color}55;position:relative;z-index:1;${anim}"><span style="font-weight:700;color:${fb.color};font-size:14px">${fb.label}</span><span style="font-size:12px;color:#bbb;margin-left:8px">${fb.message}</span></div>`;}
     if(phase==="result"&&rMsg)h+=`<div class="rbb" style="position:relative;z-index:1">${rMsg}</div>`;
     if(phase==="insurance")h+=`<div class="ibb" style="position:relative;z-index:1"><div style="font-size:14px;font-weight:600;color:#bb8fce;margin-bottom:8px">Insurance? (Half your bet)</div><div style="display:flex;gap:10px;justify-content:center"><button onclick="insure(true)" style="padding:10px 24px;border-radius:8px;background:#8e44ad;border:none;color:#fff;font-weight:600;cursor:pointer;font-family:inherit">Yes</button><button onclick="insure(false)" style="padding:10px 24px;border-radius:8px;background:#2c3e50;border:none;color:#fff;font-weight:600;cursor:pointer;font-family:inherit">No</button></div></div>`;
     if(shF&&phase==="playing")h+=`<div class="hbb" style="position:relative;z-index:1">Hint — Optimal: <b>${opt?.toUpperCase()}</b></div>`;
@@ -442,6 +460,7 @@ function rSePg(){
   const bl=S.blackjackPays===1.5?"3:2":S.blackjackPays===1.2?"6:5":"2:1";
   h+=`<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:#c8c4b8">Blackjack Pays</span><button onclick="S.blackjackPays=S.blackjackPays===1.5?1.2:S.blackjackPays===1.2?2.0:1.5;render()" style="padding:6px 16px;border-radius:8px;cursor:pointer;background:#1a2744;border:1px solid #f1c40f55;color:#f1c40f;font-size:14px;font-weight:700;font-family:inherit">${bl} ⟳</button></div></div>`;
   h+=`<div class="st"><span style="font-size:13px;color:#c8c4b8">Sound Effects</span><div class="tt" onclick="S.soundOn=!S.soundOn;if(S.soundOn)sndChip();render()" style="background:${S.soundOn?"#27ae60":"#2a3f5f"}"><div class="ttb" style="transform:translateX(${S.soundOn?22:0}px)"></div></div></div>`;
+  h+=`<div class="sr"><div class="sh"><span class="srl">Card Delay</span><span class="srv">${S.cardDelay<1000?(S.cardDelay+"ms"):(S.cardDelay/1000).toFixed(S.cardDelay%1000?"2":"1")+"s"}</span></div><input type="range" min="250" max="2000" step="250" value="${S.cardDelay}" oninput="S.cardDelay=+this.value;render()"></div>`;
   h+=`<div style="margin-top:20px"><button onclick="rGame()" style="width:100%;padding:14px 0;border-radius:10px;background:linear-gradient(135deg,#c0392b,#962d22);border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.5px;font-family:inherit">Apply & Reset Game</button></div>`;
   h+=`<div style="margin-top:16px;padding:12px;background:#1a2744;border-radius:10px;font-size:11px;color:#666;line-height:1.5"><b style="color:#888">Note:</b> Changes to deck/penetration take effect on next shuffle. Applying resets the game.</div></div>`;return h;
 }
