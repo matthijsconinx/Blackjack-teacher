@@ -54,7 +54,9 @@
   .chip{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;font-family:Georgia,serif;cursor:pointer;border:3px dashed rgba(255,255,255,.35);box-shadow:0 2px 6px rgba(0,0,0,.4),inset 0 1px 2px rgba(255,255,255,.15);user-select:none;flex-shrink:0}
   .chip:active{animation:chipBounce .2s ease}
   .c25{background:radial-gradient(circle at 35% 35%,#4CAF50,#2d7a32);color:#fff}
+  .c50{background:radial-gradient(circle at 35% 35%,#1565C0,#0D47A1);color:#fff}
   .c100{background:radial-gradient(circle at 35% 35%,#1a1a1a,#444);color:#f1c40f}
+  .c200{background:radial-gradient(circle at 35% 35%,#c0392b,#8b1a1a);color:#fff}
   .c500{background:radial-gradient(circle at 35% 35%,#7B1FA2,#4A0072);color:#fff}
   .bcs{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;font-family:Georgia,serif;border:2px dashed rgba(255,255,255,.3);box-shadow:0 1px 4px rgba(0,0,0,.3)}
   .overlay{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease}
@@ -81,23 +83,30 @@
 const SUITS=["♠","♥","♦","♣"],RANKS=["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
 const SC={"♠":"#1a1a2e","♣":"#1a1a2e","♥":"#c0392b","♦":"#c0392b"};
 const CM={H:"#e74c3c",S:"#27ae60",D:"#f1c40f",P:"#3498db",R:"#8e44ad",RS:"#7d3c98",DS:"#2ecc71"};
-const DENOMS=[500,100,25];
-const CBG={25:"radial-gradient(circle at 35% 35%,#4CAF50,#2d7a32)",100:"radial-gradient(circle at 35% 35%,#1a1a1a,#444)",500:"radial-gradient(circle at 35% 35%,#7B1FA2,#4A0072)"};
-const CTX={25:"#fff",100:"#f1c40f",500:"#fff"};
-const CCL={25:"c25",100:"c100",500:"c500"};
+const DENOMS=[500,200,100,50,25];
+const CBG={25:"radial-gradient(circle at 35% 35%,#4CAF50,#2d7a32)",50:"radial-gradient(circle at 35% 35%,#1565C0,#0D47A1)",100:"radial-gradient(circle at 35% 35%,#1a1a1a,#444)",200:"radial-gradient(circle at 35% 35%,#c0392b,#8b1a1a)",500:"radial-gradient(circle at 35% 35%,#7B1FA2,#4A0072)"};
+const CTX={25:"#fff",50:"#fff",100:"#f1c40f",200:"#fff",500:"#fff"};
+const CCL={25:"c25",50:"c50",100:"c100",200:"c200",500:"c500"};
 
 // Strategy arrays (6-deck, H17, DAS, LS)
 const HARD={5:["H","H","H","H","H","H","H","H","H","H"],6:["H","H","H","H","H","H","H","H","H","H"],7:["H","H","H","H","H","H","H","H","H","H"],8:["H","H","H","H","H","H","H","H","H","H"],9:["H","D","D","D","D","H","H","H","H","H"],10:["D","D","D","D","D","D","D","D","H","H"],11:["D","D","D","D","D","D","D","D","D","D"],12:["H","H","S","S","S","H","H","H","H","H"],13:["S","S","S","S","S","H","H","H","H","H"],14:["S","S","S","S","S","H","H","H","H","H"],15:["S","S","S","S","S","H","H","H","R","H"],16:["S","S","S","S","S","H","H","R","R","R"],17:["S","S","S","S","S","S","S","S","S","RS"],18:["S","S","S","S","S","S","S","S","S","S"],19:["S","S","S","S","S","S","S","S","S","S"],20:["S","S","S","S","S","S","S","S","S","S"],21:["S","S","S","S","S","S","S","S","S","S"]};
 const SOFT={13:["H","H","H","D","D","H","H","H","H","H"],14:["H","H","H","D","D","H","H","H","H","H"],15:["H","H","D","D","D","H","H","H","H","H"],16:["H","H","D","D","D","H","H","H","H","H"],17:["H","D","D","D","D","H","H","H","H","H"],18:["DS","DS","DS","DS","DS","S","S","H","H","H"],19:["S","S","S","S","DS","S","S","S","S","S"],20:["S","S","S","S","S","S","S","S","S","S"],21:["S","S","S","S","S","S","S","S","S","S"]};
 const PAIR={2:["P","P","P","P","P","P","H","H","H","H"],3:["P","P","P","P","P","P","H","H","H","H"],4:["H","H","H","P","P","H","H","H","H","H"],5:["D","D","D","D","D","D","D","D","H","H"],6:["P","P","P","P","P","H","H","H","H","H"],7:["P","P","P","P","P","P","H","H","H","H"],8:["P","P","P","P","P","P","P","P","P","P"],9:["P","P","P","P","P","S","P","P","S","S"],10:["S","S","S","S","S","S","S","S","S","S"],11:["P","P","P","P","P","P","P","P","P","P"]};
 
-let S={numDecks:6,penetration:75,startingBankroll:1000,minBet:25,maxBet:500,dealerHitsSoft17:true,blackjackPays:1.5,soundOn:false,cardDelay:1000};
+let S={numDecks:6,penetration:75,startingBankroll:1000,minBet:25,maxBet:500,dealerHitsSoft17:true,blackjackPays:1.5,soundOn:false,cardDelay:1000,countMode:"self"};
 let shoe=[],cd=0,BR=1000,cBet=0;
 let CI={25:0,100:0,500:0},BC=[],cashBal=0;
 let phase="betting",PH=[[]],AHI=0,DC=[],HB=[0];
 let fb=null,shF=false,rMsg="",aTab="play",showCP=false;
 let MK=[],tTO=null;
 let ST={hp:0,hw:0,hl:0,hpu:0,bj:0,tb:0,tw:0,d:{hit:{c:0,t:0},stand:{c:0,t:0},double:{c:0,t:0},split:{c:0,t:0},surrender:{c:0,t:0}},pd:0,td:0};
+
+// ─── CARD COUNTING ──────────────────────────────────────────────
+let realRC=0,playerRC=0,countFb=null;
+function hiLoVal(rank){const v=cv(rank);if(v>=2&&v<=6)return 1;if(v>=10||rank==="A")return -1;return 0;}
+function getTrueCount(rc){const decksRem=Math.max((S.numDecks*52-cd)/52,0.5);return Math.round(rc/decksRem*10)/10;}
+function countCard(c){realRC+=hiLoVal(c.rank);}
+function resetCount(){realRC=0;playerRC=0;countFb=null;}
 
 // ─── SOUND ENGINE (Web Audio API) ───────────────────────────────
 let audioCtx=null;
@@ -107,8 +116,20 @@ function getAC(){
   return audioCtx;
 }
 // Unlock audio on first touch/click (iOS requirement)
-document.addEventListener("touchstart",function unlk(){getAC();document.removeEventListener("touchstart",unlk);},{once:true});
-document.addEventListener("click",function unlk(){getAC();document.removeEventListener("click",unlk);},{once:true});
+// Also play a silent HTML5 audio to set the audio session to "playback"
+// which bypasses the iOS mute switch for Web Audio
+function unlockAudio(){
+  getAC();
+  try{
+    const silentData="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7v/////////////////////////////////"
+    +"///////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYAAAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7v//////////////////"
+    +"//////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYAAAAAAAAAAAAAAAAAAA==";
+    const a=new Audio(silentData);
+    a.play().catch(()=>{});
+  }catch(e){}
+}
+document.addEventListener("touchstart",unlockAudio,{once:true});
+document.addEventListener("click",unlockAudio,{once:true});
 
 function playTone(freq,dur,type,vol){
   if(!S.soundOn)return;try{const ac=getAC();const o=ac.createOscillator();const g=ac.createGain();
@@ -154,28 +175,44 @@ function cHTML(c,fd=false,sm=false){const w=sm?44:62,h=sm?64:90,fs=sm?"13px":"17
 
 // Chip inventory
 function b2c(amt){
-  // Base: 8x$25 + 3x$100 + 1x$500 = $1000
-  if(amt<=0)return{500:0,100:0,25:0};
-  const base={500:1,100:3,25:8}; // = $1000
-  if(amt===1000)return{...base};
-  if(amt<1000){
-    // Fewer than base: fill greedily
-    const r={500:0,100:0,25:0};let rem=amt;
-    for(const d of DENOMS){r[d]=Math.floor(rem/d);rem-=r[d]*d;}
-    return r;
+  const r={500:0,200:0,100:0,50:0,25:0};
+  if(amt<=0)return r;
+  // Always start with a base of small chips for flexibility
+  // 4x$25=$100, 4x$50=$200, 3x$100=$300 = $600 base
+  const baseSmall=Math.min(amt,600);
+  let rem=amt;
+  // Allocate small chips first (up to base amounts)
+  r[25]=Math.min(4,Math.floor(rem/25)); rem-=r[25]*25;
+  r[50]=Math.min(4,Math.floor(rem/50)); rem-=r[50]*50;
+  r[100]=Math.min(3,Math.floor(rem/100)); rem-=r[100]*100;
+  // Distribute remainder across $200 and $500, keeping it balanced
+  // Aim for roughly 2:1 ratio of $200:$500 by value
+  if(rem>0){
+    // Cap $200 chips at 4, rest goes to $500
+    r[200]=Math.min(4,Math.floor(rem/200));rem-=r[200]*200;
+    r[500]=Math.floor(rem/500);rem-=r[500]*500;
+    for(const d of DENOMS){const add=Math.floor(rem/d);r[d]+=add;rem-=add*d;}
   }
-  // More than base: add $100 chips for the difference
-  const diff=amt-1000;
-  return{500:base[500],100:base[100]+Math.floor(diff/100),25:base[25]+Math.round((diff%100)/25)};
+  return r;
 }
-function cT(inv){return(inv[500]||0)*500+(inv[100]||0)*100+(inv[25]||0)*25+cashBal;}
+function cT(inv){return(inv[500]||0)*500+(inv[200]||0)*200+(inv[100]||0)*100+(inv[50]||0)*50+(inv[25]||0)*25+cashBal;}
 function bT(){return BC.reduce((s,c)=>s+c.denom,0);}
 function initCI(){CI=b2c(BR);BC=[];cBet=0;cashBal=0;}
 
 function addCB(d){if(CI[d]<=0)return;if(bT()+d>S.maxBet){toast(`Max bet is $${S.maxBet}`,"#e74c3c");return;}CI[d]--;BC.push({denom:d});cBet=bT();sndChip();render();}
 function resetBet(){for(const c of BC)CI[c.denom]++;BC=[];cBet=0;render();}
-function breakChip(d){if(CI[d]<=0)return;if(d===500){CI[500]--;CI[100]+=5;}else if(d===100){CI[100]--;CI[25]+=4;}showCP=false;render();}
-function consolidate(d){if(d===100&&CI[25]>=4){CI[25]-=4;CI[100]++;}else if(d===500&&CI[100]>=5){CI[100]-=5;CI[500]++;}showCP=false;render();}
+function breakChip(d){if(CI[d]<=0)return;CI[d]--;
+  if(d===500){CI[200]+=2;CI[100]+=1;}
+  else if(d===200){CI[100]+=2;}
+  else if(d===100){CI[50]+=2;}
+  else if(d===50){CI[25]+=2;}
+  showCP=false;render();}
+function consolidate(d){
+  if(d===50&&CI[25]>=2){CI[25]-=2;CI[50]++;}
+  else if(d===100&&CI[50]>=2){CI[50]-=2;CI[100]++;}
+  else if(d===200&&CI[100]>=2){CI[100]-=2;CI[200]++;}
+  else if(d===500&&CI[200]>=2&&CI[100]>=1){CI[200]-=2;CI[100]-=1;CI[500]++;}
+  showCP=false;render();}
 function deductInv(amt){
   const fc=Math.min(cashBal,amt);cashBal-=fc;let rem=amt-fc;
   for(const d of DENOMS){const tk=Math.min(CI[d],Math.floor(rem/d));CI[d]-=tk;rem-=tk*d;}
@@ -198,7 +235,7 @@ function canDb(){const h=PH[AHI];return h&&h.length===2&&cT(CI)>=HB[AHI];}
 function canSr(){const h=PH[AHI];return h&&h.length===2&&PH.length===1;}
 function gOpt(){const h=PH[AHI];if(!h||!h.length||!DC[0])return"stand";return gOA(h,DC[0].rank,canSp(),canDb(),canSr());}
 
-function deal(){if(cBet<S.minBet){toast(`Min bet: $${S.minBet}`,"#e74c3c");return;}if(needsS())rShuf();fb=null;shF=false;rMsg="";const bet=cBet;const p1=draw(),d1=draw(),p2=draw(),d2=draw();PH=[[p1,p2]];DC=[d1,d2];HB=[bet];AHI=0;BR=cT(CI);sndDeal();if(d1.rank==="A"){phase="insurance";render();return;}if(hv([p1,p2])===21){phase="dealer";render();setTimeout(resolveStep,S.cardDelay);return;}phase="playing";render();}
+function deal(){if(cBet<S.minBet){toast(`Min bet: $${S.minBet}`,"#e74c3c");return;}if(needsS()){rShuf();resetCount();}fb=null;shF=false;rMsg="";countFb=null;const bet=cBet;const p1=draw(),d1=draw(),p2=draw(),d2=draw();PH=[[p1,p2]];DC=[d1,d2];HB=[bet];AHI=0;BR=cT(CI);sndDeal();countCard(p1);countCard(d1);countCard(p2);if(d1.rank==="A"){phase="insurance";render();return;}if(hv([p1,p2])===21){phase="dealer";render();setTimeout(resolveStep,S.cardDelay);return;}phase="playing";render();}
 
 function insure(take){const cost=HB[0]/2;if(take){deductInv(cost);fb={rating:"bad",label:"Mistake",evCost:cost*.077,message:"Insurance has ~7.7% house edge. Always decline.",color:"#e74c3c"};}else fb={rating:"good",label:"Perfect",evCost:0,message:"Correct! Insurance is a sucker bet.",color:"#27ae60"};if(hv(DC)===21){if(take)addInv(cost*3);phase="dealer";render();setTimeout(finishResolve,S.cardDelay);return;}if(hv(PH[0])===21){phase="dealer";render();setTimeout(resolveStep,S.cardDelay);return;}phase="playing";render();}
 
@@ -206,23 +243,23 @@ function recD(a,o){const ic=a===o;ST.td++;if(ic)ST.pd++;if(ST.d[a]){ST.d[a].t++;
 
 let acting=false,lastFbId=0,fbId=0;
 function act(a){if(acting)return;const o=gOpt(),h=PH[AHI],bet=HB[AHI];const mr=rM(a,o,h,DC[0].rank,bet);let msg;if(mr.rating==="good")msg=`${a[0].toUpperCase()+a.slice(1)} is the optimal play here.`;else if(mr.rating==="medium")msg=`Optimal was ${o}. EV cost: ~$${mr.evCost.toFixed(2)}.`;else msg=`Should have ${o}. EV cost: ~$${mr.evCost.toFixed(2)}.`;fb={...mr,message:msg};fbId++;recD(a,o);shF=false;
-if(a==="hit"){acting=true;render();setTimeout(()=>{PH[AHI]=[...h,draw()];sndCard();acting=false;if(hv(PH[AHI])>21)sndBust();if(hv(PH[AHI])>=21)advance();else render();},S.cardDelay);}
+if(a==="hit"){acting=true;render();setTimeout(()=>{const nc=draw();PH[AHI]=[...h,nc];countCard(nc);sndCard();acting=false;if(hv(PH[AHI])>21)sndBust();if(hv(PH[AHI])>=21)advance();else render();},S.cardDelay);}
 else if(a==="stand")advance();
-else if(a==="double"){deductInv(bet);HB[AHI]=bet*2;acting=true;render();setTimeout(()=>{PH[AHI]=[...h,draw()];sndCard();acting=false;advance();},S.cardDelay);}
-else if(a==="split"){deductInv(bet);acting=true;render();setTimeout(()=>{const c1=h[0],c2=h[1];PH[AHI]=[c1,draw()];PH.splice(AHI+1,0,[c2,draw()]);HB.splice(AHI+1,0,bet);sndCard();acting=false;if(c1.rank==="A"){advance(AHI+2);return;}if(hv(PH[AHI])===21)advance();else render();},S.cardDelay);}
+else if(a==="double"){deductInv(bet);HB[AHI]=bet*2;acting=true;render();setTimeout(()=>{const nc=draw();PH[AHI]=[...h,nc];countCard(nc);sndCard();acting=false;advance();},S.cardDelay);}
+else if(a==="split"){deductInv(bet);acting=true;render();setTimeout(()=>{const c1=h[0],c2=h[1];const nc1=draw(),nc2=draw();PH[AHI]=[c1,nc1];PH.splice(AHI+1,0,[c2,nc2]);HB.splice(AHI+1,0,bet);countCard(nc1);countCard(nc2);sndCard();acting=false;if(c1.rank==="A"){advance(AHI+2);return;}if(hv(PH[AHI])===21)advance();else render();},S.cardDelay);}
 else if(a==="surrender"){addInv(bet/2);HB[AHI]=0;rMsg="Hand surrendered. Half bet returned.";phase="result";ST.hp++;ST.hl++;ST.tb+=bet;BR=cT(CI);render();}}
 
 function advance(fi){const ni=fi!==undefined?fi:AHI+1;if(ni<PH.length){AHI=ni;render();return;}phase="dealer";render();setTimeout(resolveStep,S.cardDelay);}
 
+let holeCardCounted=false;
 function resolveStep(){
-  // First call: hole card is revealed (phase=dealer means faceDown=false)
-  // Check if all player hands busted
+  // Count the hole card when first revealed
+  if(!holeCardCounted){countCard(DC[1]);holeCardCounted=true;render();}
   const allBusted=PH.every((h,i)=>hv(h)>21||HB[i]===0);
   if(allBusted){finishResolve();return;}
-  // Check if dealer needs to draw
   const needsHit=hv(DC)<17||(S.dealerHitsSoft17&&hv(DC)===17&&isS(DC));
   if(needsHit){
-    DC=[...DC,draw()];sndCard();render();
+    const nc=draw();DC=[...DC,nc];countCard(nc);sndCard();render();
     setTimeout(resolveStep,S.cardDelay);
   } else {
     finishResolve();
@@ -243,10 +280,13 @@ function finishResolve(){
   BR=cT(CI);rMsg=res.map(r=>{if(r.r==="bj")return`Blackjack! +$${(r.p-HB[r.i]).toFixed(0)}`;if(r.r==="win")return`Win! +$${HB[r.i]}`;if(r.r==="push")return"Push.";if(r.r==="bust")return`Bust! -$${HB[r.i]}`;return`Lose. -$${HB[r.i]}`;}).join(" | ");
   const hasWin=res.some(r=>r.r==="win"),hasBJ=res.some(r=>r.r==="bj"),hasLose=res.some(r=>r.r==="lose"||r.r==="bust");
   if(hasBJ)sndBJ();else if(hasWin)sndWin();else if(hasLose)sndLose();
+  // Assisted count feedback
+  if(S.countMode==="assisted"){const diff=playerRC-realRC;countFb=diff===0?{ok:true,msg:`Your count: ${playerRC} — Correct!`}:{ok:false,msg:`Your count: ${playerRC} — Actual: ${realRC} (off by ${diff>0?"+":""}${diff})`};}
+  holeCardCounted=false;
   phase="result";render();
 }
 
-function rGame(){BR=S.startingBankroll;phase="betting";PH=[[]];DC=[];HB=[0];fb=null;rMsg="";cBet=0;BC=[];CI=b2c(BR);cashBal=0;rShuf();toast("Settings applied — game reset!","#f1c40f");render();}
+function rGame(){BR=S.startingBankroll;phase="betting";PH=[[]];DC=[];HB=[0];fb=null;rMsg="";cBet=0;BC=[];CI=b2c(BR);cashBal=0;rShuf();resetCount();toast("Settings applied — game reset!","#f1c40f");render();}
 function rStats(){ST={hp:0,hw:0,hl:0,hpu:0,bj:0,tb:0,tw:0,d:{hit:{c:0,t:0},stand:{c:0,t:0},double:{c:0,t:0},split:{c:0,t:0},surrender:{c:0,t:0}},pd:0,td:0};MK=[];toast("Stats cleared!","#e74c3c");render();}
 
 // ─── RENDER ──────────────────────────────────────────────────────
@@ -313,17 +353,34 @@ function rPlay(){
   h+=`<div style="flex:1;display:flex;flex-direction:column;padding:6px 12px;gap:4px;overflow:auto;position:relative">`;
   // "BLACKJACK PAYS" printed on felt like real table markings
   h+=`<div style="text-align:center;position:relative;z-index:1;margin-bottom:2px"><span style="font-size:10px;color:rgba(218,165,32,.4);font-family:Georgia,serif;letter-spacing:3px">BLACKJACK</span><br><span style="font-size:13px;color:rgba(218,165,32,.5);font-family:Georgia,serif;letter-spacing:2px;font-weight:700">PAYS ${bjPaysLabel()}</span></div>`;
-  h+=`<div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1"><div class="bet-badge">Bet: $${totalBet}</div><div class="bet-badge" style="color:#aaa;border-color:rgba(255,255,255,.1)">Bank: $${cT(CI)}</div></div>`;
+  const showCount=S.countMode!=="self";
+  const rc=S.countMode==="auto"?realRC:playerRC;
+  const tc=getTrueCount(S.countMode==="auto"?realRC:playerRC);
+  if(showCount){
+    // Stacked layout: left=Bet/Bank, right=RC/TC
+    h+=`<div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1">`;
+    h+=`<div style="display:flex;flex-direction:column;gap:3px"><div class="bet-badge">Bet: $${totalBet}</div><div class="bet-badge" style="color:#aaa;border-color:rgba(255,255,255,.1)">Bank: $${cT(CI)}</div></div>`;
+    h+=`<div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end"><div class="bet-badge" style="color:#5dade2;border-color:rgba(93,173,226,.3)">RC: ${rc}</div><div class="bet-badge" style="color:#5dade2;border-color:rgba(93,173,226,.3)">TC: ${tc}</div></div>`;
+    h+=`</div>`;
+    // Bet suggestion in auto mode
+    if(S.countMode==="auto"&&tc>=2&&isBetting)h+=`<div style="text-align:center;font-size:11px;color:#f1c40f;position:relative;z-index:1;margin-top:2px">Count favors higher bet</div>`;
+    else if(S.countMode==="auto"&&tc<=-2&&isBetting)h+=`<div style="text-align:center;font-size:11px;color:#e74c3c;position:relative;z-index:1;margin-top:2px">Count favors minimum bet</div>`;
+  } else {
+    // Self-count: normal layout
+    h+=`<div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1"><div class="bet-badge">Bet: $${totalBet}</div><div class="bet-badge" style="color:#aaa;border-color:rgba(255,255,255,.1)">Bank: $${cT(CI)}</div></div>`;
+  }
   if(!isBetting){
-    h+=`<div style="text-align:center;position:relative;z-index:1"><div style="font-size:9px;color:rgba(218,165,32,.3);letter-spacing:2px;margin-bottom:4px">DEALER ${phase==="dealer"||phase==="result"?"• "+hv(DC):""}</div><div style="display:flex;justify-content:center;gap:6px">`;
+    h+=`<div style="text-align:center;position:relative;z-index:1"><div style="font-size:9px;color:rgba(218,165,32,.55);letter-spacing:2px;margin-bottom:4px">DEALER ${phase==="dealer"||phase==="result"?"• "+hv(DC):""}</div><div style="display:flex;justify-content:center;gap:6px">`;
     DC.forEach((c,i)=>{h+=cHTML(c,i===1&&(phase==="playing"||phase==="insurance"));});
     h+=`</div></div>`;
   } else {
-    h+=`<div style="text-align:center;position:relative;z-index:1"><div style="font-size:9px;color:rgba(218,165,32,.2);letter-spacing:2px;margin:4px 0">DEALER</div></div>`;
+    h+=`<div style="text-align:center;position:relative;z-index:1"><div style="font-size:9px;color:rgba(218,165,32,.45);letter-spacing:2px;margin:4px 0">DEALER</div></div>`;
   }
   if(!isBetting){
     if(fb){const anim=fbId!==lastFbId?"animation:fadeIn .3s ease;":"";lastFbId=fbId;h+=`<div class="fbb" style="border:1px solid ${fb.color}55;position:relative;z-index:1;${anim}"><span style="font-weight:700;color:${fb.color};font-size:14px">${fb.label}</span><span style="font-size:12px;color:#bbb;margin-left:8px">${fb.message}</span></div>`;}
     if(phase==="result"&&rMsg)h+=`<div class="rbb" style="position:relative;z-index:1">${rMsg}</div>`;
+    // Assisted count feedback at end of hand
+    if(phase==="result"&&S.countMode==="assisted"&&countFb)h+=`<div style="background:rgba(0,0,0,.4);border:1px solid ${countFb.ok?"#27ae6055":"#e74c3c55"};border-radius:10px;padding:8px 12px;text-align:center;position:relative;z-index:1;font-size:13px;color:${countFb.ok?"#27ae60":"#e74c3c"}">${countFb.msg}</div>`;
     if(phase==="insurance")h+=`<div class="ibb" style="position:relative;z-index:1"><div style="font-size:14px;font-weight:600;color:#bb8fce;margin-bottom:8px">Insurance? (Half your bet)</div><div style="display:flex;gap:10px;justify-content:center"><button onclick="insure(true)" style="padding:10px 24px;border-radius:8px;background:#8e44ad;border:none;color:#fff;font-weight:600;cursor:pointer;font-family:inherit">Yes</button><button onclick="insure(false)" style="padding:10px 24px;border-radius:8px;background:#2c3e50;border:none;color:#fff;font-weight:600;cursor:pointer;font-family:inherit">No</button></div></div>`;
     if(shF&&phase==="playing")h+=`<div class="hbb" style="position:relative;z-index:1">Hint — Optimal: <b>${opt?.toUpperCase()}</b></div>`;
   }
@@ -335,21 +392,25 @@ function rPlay(){
     if(!BC.length){
       h+=`<div style="font-size:11px;color:rgba(218,165,32,.3);letter-spacing:1px">PLACE BET</div>`;
     } else {
-      const g={500:0,100:0,25:0};BC.forEach(c=>g[c.denom]++);
-      const activeD=[500,100,25].filter(d=>g[d]>0);
-      h+=`<div style="display:flex;justify-content:center;gap:8px;align-items:flex-end">`;
-      for(const d of activeD){
+      const g={};DENOMS.forEach(d=>g[d]=0);BC.forEach(c=>g[c.denom]++);
+      const activeD=DENOMS.filter(d=>g[d]>0); // sorted large to small (DENOMS order)
+      const topRow=activeD.slice(0,2);
+      const botRow=activeD.slice(2);
+      function chipStack(d){
         const cnt=g[d];
-        const stackH=46+(Math.min(cnt,10)-1)*4;
-        h+=`<div style="position:relative;width:46px;height:${stackH}px">`;
+        const stackH=34+(Math.min(cnt,10)-1)*4;
+        let s=`<div style="position:relative;width:34px;height:${stackH}px">`;
         for(let i=0;i<Math.min(cnt,10);i++){
-          h+=`<div class="bcs" style="background:${CBG[d]};color:${CTX[d]};width:46px;height:46px;font-size:10px;position:absolute;bottom:${i*4}px;left:0;z-index:${i}">$${d}</div>`;
+          s+=`<div class="bcs" style="background:${CBG[d]};color:${CTX[d]};width:34px;height:34px;font-size:8px;position:absolute;bottom:${i*4}px;left:0;z-index:${i}">$${d}</div>`;
         }
-        if(cnt>1)h+=`<div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:9px;color:rgba(255,255,255,.5);font-weight:600">x${cnt}</div>`;
-        h+=`</div>`;
+        if(cnt>1)s+=`<div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:8px;color:rgba(255,255,255,.5);font-weight:600">x${cnt}</div>`;
+        s+=`</div>`;return s;
       }
+      h+=`<div style="display:flex;flex-direction:column;align-items:center;gap:2px">`;
+      if(topRow.length){h+=`<div style="display:flex;justify-content:center;gap:8px;align-items:flex-end">${topRow.map(chipStack).join("")}</div>`;}
+      if(botRow.length){h+=`<div style="display:flex;justify-content:center;gap:8px;align-items:flex-end">${botRow.map(chipStack).join("")}</div>`;}
       h+=`</div>`;
-      h+=`<div style="font-size:20px;font-weight:700;color:#f1c40f;font-family:Georgia,serif">$${cBet}</div>`;
+      h+=`<div style="font-size:18px;font-weight:700;color:#f1c40f;font-family:Georgia,serif">$${cBet}</div>`;
     }
     h+=`</div>`;
     if(cBet>0&&cBet<S.minBet)h+=`<div style="font-size:11px;color:#e74c3c;margin-top:4px">Min bet: $${S.minBet}</div>`;
@@ -376,16 +437,18 @@ function rPlay(){
     h+=`<button onclick="showCP=true;render()" style="flex:1;padding:10px 0;border-radius:10px;border:1px solid rgba(255,255,255,.08);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;background:rgba(255,255,255,.05);color:rgba(255,255,255,.4)">CHANGE</button>`;
     h+=`<button onclick="deal()" ${canD?"":"disabled"} style="flex:2;padding:10px 0;border-radius:10px;border:none;font-size:14px;font-weight:700;cursor:${canD?"pointer":"not-allowed"};letter-spacing:1px;font-family:inherit;background:${canD?"linear-gradient(135deg,#27ae60,#1e8449)":"rgba(255,255,255,.05)"};color:${canD?"#fff":"#444"}">DEAL</button>`;
     h+=`</div>`;
-    h+=`<div style="display:flex;justify-content:center;gap:14px;align-items:center">`;
+    h+=`<div style="display:flex;justify-content:center;gap:6px;align-items:center">`;
     for(const d of DENOMS.slice().reverse()){const cnt=CI[d];const op=cnt>0?"1":".25";
       h+=`<div onclick="addCB(${d})" style="display:flex;flex-direction:column;align-items:center;cursor:pointer;opacity:${op}">`;
-      h+=`<div class="chip ${CCL[d]}" style="width:54px;height:54px;font-size:12px">$${d}</div>`;
+      h+=`<div class="chip ${CCL[d]}" style="width:48px;height:48px;font-size:10px">$${d}</div>`;
       h+=`<div style="font-size:9px;color:rgba(255,255,255,.4);font-weight:600;margin-top:2px">x${cnt}</div></div>`;}
     h+=`</div>`;
     if(cashBal>0)h+=`<div style="text-align:center;font-size:10px;color:rgba(255,255,255,.4);margin-top:3px">+$${cashBal.toFixed(2)} loose change</div>`;
     else h+=`<div style="text-align:center;font-size:10px;color:rgba(255,255,255,.15);margin-top:3px">$0.00 loose change</div>`;
     if(BR<S.minBet&&!BC.length)h+=`<div style="text-align:center;margin-top:10px;background:rgba(0,0,0,.4);border:1px solid #c0392b55;border-radius:12px;padding:14px 16px"><div style="font-size:16px;font-weight:700;color:#e74c3c;margin-bottom:4px">Out of chips!</div><div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:10px">You don't have enough to place the minimum bet of $${S.minBet}.</div><button onclick="rGame()" style="padding:10px 28px;border-radius:10px;background:linear-gradient(135deg,#c0392b,#962d22);border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Buy Back In — $${S.startingBankroll}</button></div>`;
   } else if(phase==="playing"){
+    // Assisted count buttons
+    if(S.countMode==="assisted")h+=`<div style="display:flex;justify-content:center;gap:8px;margin-bottom:6px"><button onclick="playerRC--;render()" style="width:50px;padding:8px 0;border-radius:8px;background:rgba(231,76,60,.25);border:1px solid #e74c3c55;color:#e74c3c;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">−1</button><button onclick="render()" style="width:50px;padding:8px 0;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#aaa;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">0</button><button onclick="playerRC++;render()" style="width:50px;padding:8px 0;border-radius:8px;background:rgba(39,174,96,.25);border:1px solid #27ae6055;color:#27ae60;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">+1</button></div>`;
     h+=`<div style="display:flex;flex-direction:column;gap:5px">`;
     h+=`<div style="display:flex;gap:5px">${aBtn("HIT","#e74c3c","act('hit')")}${aBtn("STAND","#27ae60","act('stand')")}</div>`;
     h+=`<div style="display:flex;gap:5px">`;
@@ -395,7 +458,9 @@ function rPlay(){
     h+=`<button class="abtn" onclick="shF=true;render()" style="background:rgba(255,255,255,.07);border:1px solid #ffffff22;color:#aaa;font-size:13px">HINT</button>`;
     h+=`</div></div>`;
   } else if(phase==="result"){
-    h+=`<button class="dbtn" onclick="phase='betting';fb=null;shF=false;BC=[];cBet=0;render()" style="width:100%;background:linear-gradient(135deg,#2980b9,#1a5276);font-size:16px">NEXT HAND</button>`;
+    // Assisted count buttons in result phase too
+    if(S.countMode==="assisted")h+=`<div style="display:flex;justify-content:center;gap:8px;margin-bottom:6px"><button onclick="playerRC--;render()" style="width:50px;padding:8px 0;border-radius:8px;background:rgba(231,76,60,.25);border:1px solid #e74c3c55;color:#e74c3c;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">−1</button><button onclick="render()" style="width:50px;padding:8px 0;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#aaa;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">0</button><button onclick="playerRC++;render()" style="width:50px;padding:8px 0;border-radius:8px;background:rgba(39,174,96,.25);border:1px solid #27ae6055;color:#27ae60;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">+1</button></div>`;
+    h+=`<button class="dbtn" onclick="phase='betting';fb=null;shF=false;BC=[];cBet=0;countFb=null;render()" style="width:100%;background:linear-gradient(135deg,#2980b9,#1a5276);font-size:16px">NEXT HAND</button>`;
   }
   h+=`</div></div></div>`;
   return h;
@@ -404,13 +469,13 @@ function rPlay(){
 function rCPop(){
   let h=`<div class="overlay" onclick="showCP=false;render()"><div class="popup" onclick="event.stopPropagation()"><h3>Change Chips</h3>`;
   h+=`<div style="font-size:11px;color:#7a8ba3;margin-bottom:6px;letter-spacing:.5px">BREAK DOWN</div>`;
-  const c5=CI[500]>0,c1=CI[100]>0;
-  h+=`<div class="pcr"><div style="display:flex;align-items:center;gap:8px">${chipEl(500,36)}<span style="font-size:13px;color:#aaa">x${CI[500]}</span></div><button class="pbtn" onclick="breakChip(500)" ${c5?"":"disabled"} style="background:${c5?"#7B1FA2":"#222"};color:${c5?"#fff":"#555"}">5x$100</button></div>`;
-  h+=`<div class="pcr"><div style="display:flex;align-items:center;gap:8px">${chipEl(100,36)}<span style="font-size:13px;color:#aaa">x${CI[100]}</span></div><button class="pbtn" onclick="breakChip(100)" ${c1?"":"disabled"} style="background:${c1?"#333":"#222"};color:${c1?"#f1c40f":"#555"}">4x$25</button></div>`;
+  const brk=[[500,"2x$200 + $100"],[200,"2x$100"],[100,"2x$50"],[50,"2x$25"]];
+  for(const[d,lbl] of brk){const ok=CI[d]>0;
+    h+=`<div class="pcr"><div style="display:flex;align-items:center;gap:8px">${chipEl(d,32)}<span style="font-size:12px;color:#aaa">x${CI[d]}</span></div><button class="pbtn" onclick="breakChip(${d})" ${ok?"":"disabled"} style="background:${ok?"#2a3f5f":"#222"};color:${ok?"#fff":"#555"};font-size:11px">${lbl}</button></div>`;}
   h+=`<div style="font-size:11px;color:#7a8ba3;margin:12px 0 6px;letter-spacing:.5px">CONSOLIDATE</div>`;
-  const cn1=CI[25]>=4,cn5=CI[100]>=5;
-  h+=`<div class="pcr"><div style="display:flex;align-items:center;gap:8px">${chipEl(25,36)}<span style="font-size:13px;color:#aaa">x${CI[25]}</span></div><button class="pbtn" onclick="consolidate(100)" ${cn1?"":"disabled"} style="background:${cn1?"#4CAF50":"#222"};color:${cn1?"#fff":"#555"}">4x$25 = $100</button></div>`;
-  h+=`<div class="pcr"><div style="display:flex;align-items:center;gap:8px">${chipEl(100,36)}<span style="font-size:13px;color:#aaa">x${CI[100]}</span></div><button class="pbtn" onclick="consolidate(500)" ${cn5?"":"disabled"} style="background:${cn5?"#333":"#222"};color:${cn5?"#f1c40f":"#555"}">5x$100 = $500</button></div>`;
+  const con=[[50,CI[25]>=2,"2x$25"],[100,CI[50]>=2,"2x$50"],[200,CI[100]>=2,"2x$100"],[500,CI[200]>=2&&CI[100]>=1,"2x$200+$100"]];
+  for(const[d,ok,lbl] of con){
+    h+=`<div class="pcr"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;color:#aaa">${lbl}</span></div><button class="pbtn" onclick="consolidate(${d})" ${ok?"":"disabled"} style="background:${ok?"#2a3f5f":"#222"};color:${ok?"#fff":"#555"};font-size:11px">= $${d}</button></div>`;}
   h+=`<div style="text-align:center;margin-top:14px"><button onclick="showCP=false;render()" style="padding:8px 24px;border-radius:8px;background:#1a2744;border:1px solid #2a3f5f;color:#7a8ba3;font-size:13px;cursor:pointer;font-family:inherit">Close</button></div></div></div>`;return h;
 }
 function aBtn(l,c,oc){return`<button class="abtn" onclick="${oc}" style="background:linear-gradient(135deg,${c},${c}bb);box-shadow:0 3px 12px ${c}44">${l}</button>`;}
@@ -423,6 +488,12 @@ function rRules(){
   h+=sec("Dealer Rules","Dealer must hit on 16 or below, stand on hard 17+. With \"Dealer Hits Soft 17\" the dealer also hits soft 17 (A+6).");
   h+=sec("Your Options",`<b style="color:#e74c3c">Hit</b> — Take another card. Example: 10+4=14 vs dealer 10, hit and get 5 for 19.<br><br><b style="color:#27ae60">Stand</b> — Keep your hand. Example: K+8=18 vs dealer 6, stand — dealer likely busts.<br><br><b style="color:#f39c12">Double Down</b> — Double bet, get exactly one card. Example: 6+5=11 vs dealer 7, double for 21.<br><br><b style="color:#3498db">Split</b> — Equal-value pair becomes two hands. Example: 8+8=16, split and play each independently.<br><br><b style="color:#8e44ad">Surrender</b> — Forfeit half bet. First action only. Example: 16 vs dealer 10.<br><br><b style="color:#bb8fce">Insurance</b> — Dealer shows Ace: side bet at half stake. Always decline (~7.7% house edge).`);
   h+=sec("Blackjack",`A+10-value on first two cards. Pays ${bp}. Both have BJ = push.`);
+  h+=`<h2 style="color:#f1c40f;font-size:18px;margin:20px 0 12px;font-family:Georgia,serif">Card Counting (Hi-Lo)</h2>`;
+  h+=sec("The Concept","Card counting tracks the ratio of high to low cards remaining in the shoe. When more high cards (10s, face cards, aces) remain, the player has an edge — blackjacks are more likely and the dealer busts more often on stiff hands.");
+  h+=sec("Hi-Lo Values","As each card is dealt, assign a value: <b style=\"color:#27ae60\">2–6 = +1</b> (low card removed, good for player), <b style=\"color:#aaa\">7–9 = 0</b> (neutral), <b style=\"color:#e74c3c\">10/J/Q/K/A = −1</b> (high card removed, bad for player). Keep a running total — this is the <b style=\"color:#5dade2\">Running Count (RC)</b>.");
+  h+=sec("True Count","The running count alone doesn't account for how many cards are left. Divide the RC by the number of decks remaining to get the <b style=\"color:#5dade2\">True Count (TC)</b>. Example: RC of +6 with 2 decks left = TC of +3.");
+  h+=sec("How It Shifts the Odds","With basic strategy, the house edge is roughly 0.5%. Each +1 in true count shifts the edge about 0.5% toward the player. At TC +2, the game is roughly even. At TC +3 or higher, the player has a meaningful 1–1.5% edge.");
+  h+=sec("Using the Count","<b style=\"color:#f1c40f\">Bet sizing</b> — This is where the money is made. Bet more when the TC is high (+2 or above), bet minimum when it's low or negative.<br><br><b style=\"color:#f1c40f\">Strategy deviations</b> — Some plays change at high counts. For example, take insurance at TC +3 (normally always decline), stand on 16 vs 10 at higher counts, or double on hands you normally wouldn't.<br><br><b style=\"color:#f1c40f\">Important</b> — Only count cards you can see. The dealer's face-down hole card is not counted until it's revealed.");
   h+=`<h2 style="color:#f1c40f;font-size:18px;margin:20px 0 12px;font-family:Georgia,serif">Basic Strategy Chart</h2>`;
   h+=`<div style="font-size:11px;color:#888;margin-bottom:8px">${S.numDecks} decks • ${S.penetration}% penetration • Dealer ${S.dealerHitsSoft17?"hits":"stands on"} soft 17 • BJ pays ${S.blackjackPays===1.5?"3:2":S.blackjackPays===1.2?"6:5":"2:1"}</div>`;
   h+=rChart()+`</div>`;return h;
@@ -469,6 +540,9 @@ function rSePg(){
   h+=`<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:#c8c4b8">Blackjack Pays</span><button onclick="S.blackjackPays=S.blackjackPays===1.5?1.2:S.blackjackPays===1.2?2.0:1.5;render()" style="padding:6px 16px;border-radius:8px;cursor:pointer;background:#1a2744;border:1px solid #f1c40f55;color:#f1c40f;font-size:14px;font-weight:700;font-family:inherit">${bl} ⟳</button></div></div>`;
   h+=`<div class="st"><span style="font-size:13px;color:#c8c4b8">Sound Effects</span><div class="tt" onclick="S.soundOn=!S.soundOn;if(S.soundOn)sndChip();render()" style="background:${S.soundOn?"#27ae60":"#2a3f5f"}"><div class="ttb" style="transform:translateX(${S.soundOn?22:0}px)"></div></div></div>`;
   h+=`<div class="sr"><div class="sh"><span class="srl">Card Delay</span><span class="srv">${S.cardDelay<1000?(S.cardDelay+"ms"):(S.cardDelay/1000).toFixed(S.cardDelay%1000?"2":"1")+"s"}</span></div><input type="range" min="250" max="2000" step="250" value="${S.cardDelay}" oninput="S.cardDelay=+this.value;render()"></div>`;
+  const cmLabels={self:"Self-count",assisted:"Assisted",auto:"Auto-count"};
+  const cmDesc=S.countMode==="self"?"Count in your head — no display":S.countMode==="assisted"?"Use +1/0/−1 buttons, get accuracy feedback":"RC and TC update automatically";
+  h+=`<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:#c8c4b8">Card Counting</span><button onclick="S.countMode=S.countMode==='self'?'assisted':S.countMode==='assisted'?'auto':'self';resetCount();render()" style="padding:6px 16px;border-radius:8px;cursor:pointer;background:#1a2744;border:1px solid #5dade255;color:#5dade2;font-size:13px;font-weight:700;font-family:inherit">${cmLabels[S.countMode]} ⟳</button></div><div style="font-size:10px;color:#666;margin-top:4px">${cmDesc}</div></div>`;
   h+=`<div style="margin-top:20px"><button onclick="rGame()" style="width:100%;padding:14px 0;border-radius:10px;background:linear-gradient(135deg,#c0392b,#962d22);border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.5px;font-family:inherit">Apply & Reset Game</button></div>`;
   h+=`<div style="margin-top:16px;padding:12px;background:#1a2744;border-radius:10px;font-size:11px;color:#666;line-height:1.5"><b style="color:#888">Note:</b> Changes to deck/penetration take effect on next shuffle. Applying resets the game.</div></div>`;return h;
 }
