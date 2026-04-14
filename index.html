@@ -101,7 +101,15 @@ let ST={hp:0,hw:0,hl:0,hpu:0,bj:0,tb:0,tw:0,d:{hit:{c:0,t:0},stand:{c:0,t:0},dou
 
 // ─── SOUND ENGINE (Web Audio API) ───────────────────────────────
 let audioCtx=null;
-function getAC(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function getAC(){
+  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==="suspended")audioCtx.resume();
+  return audioCtx;
+}
+// Unlock audio on first touch/click (iOS requirement)
+document.addEventListener("touchstart",function unlk(){getAC();document.removeEventListener("touchstart",unlk);},{once:true});
+document.addEventListener("click",function unlk(){getAC();document.removeEventListener("click",unlk);},{once:true});
+
 function playTone(freq,dur,type,vol){
   if(!S.soundOn)return;try{const ac=getAC();const o=ac.createOscillator();const g=ac.createGain();
   o.type=type||"sine";o.frequency.value=freq;g.gain.value=vol||0.08;
