@@ -309,9 +309,19 @@ function rPlay(){
     if(!BC.length){
       h+=`<div style="font-size:11px;color:rgba(218,165,32,.3);letter-spacing:1px">PLACE BET</div>`;
     } else {
-      h+=`<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:3px">`;
       const g={500:0,100:0,25:0};BC.forEach(c=>g[c.denom]++);
-      for(const d of DENOMS)for(let i=0;i<g[d];i++)h+=`<div class="bcs" style="background:${CBG[d]};color:${CTX[d]};width:42px;height:42px;font-size:10px">$${d}</div>`;
+      const activeD=[500,100,25].filter(d=>g[d]>0);
+      h+=`<div style="display:flex;justify-content:center;gap:8px;align-items:flex-end">`;
+      for(const d of activeD){
+        const cnt=g[d];
+        const stackH=46+(Math.min(cnt,10)-1)*4;
+        h+=`<div style="position:relative;width:46px;height:${stackH}px">`;
+        for(let i=0;i<Math.min(cnt,10);i++){
+          h+=`<div class="bcs" style="background:${CBG[d]};color:${CTX[d]};width:46px;height:46px;font-size:10px;position:absolute;bottom:${i*4}px;left:0;z-index:${i}">$${d}</div>`;
+        }
+        if(cnt>1)h+=`<div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:9px;color:rgba(255,255,255,.5);font-weight:600">x${cnt}</div>`;
+        h+=`</div>`;
+      }
       h+=`</div>`;
       h+=`<div style="font-size:20px;font-weight:700;color:#f1c40f;font-family:Georgia,serif">$${cBet}</div>`;
     }
