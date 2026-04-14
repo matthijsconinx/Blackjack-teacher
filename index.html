@@ -345,28 +345,31 @@ function rPlay(){
   let h=`<div style="flex:1;display:flex;flex-direction:column;overflow:hidden;border:6px solid #b8884c;border-radius:4px;position:relative;background:radial-gradient(ellipse at 50% 40%,#1a6b3c,#145a30 50%,#0d3f22 80%,#082a16)">`;
   // Felt texture over entire table
   h+=`<div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.012) 0px,rgba(255,255,255,.012) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:0"></div>`;
-  // Dealer bay — transparent outside the wood area so felt shows through
-  h+=`<div style="flex-shrink:0;position:relative;z-index:2">${dealerBaySVG()}</div>`;
-  // Play surface — no separate background, inherits from parent
-  h+=`<div style="flex:1;display:flex;flex-direction:column;padding:6px 12px;gap:4px;overflow:auto;position:relative">`;
-  // "BLACKJACK PAYS" printed on felt like real table markings
-  h+=`<div style="text-align:center;position:relative;z-index:1;margin-bottom:2px"><span style="font-size:10px;color:rgba(218,165,32,.4);font-family:Georgia,serif;letter-spacing:3px">BLACKJACK</span><br><span style="font-size:13px;color:rgba(218,165,32,.5);font-family:Georgia,serif;letter-spacing:2px;font-weight:700">PAYS ${bjPaysLabel()}</span></div>`;
+  // Dealer bay with badge overlays
   const showCount=S.countMode!=="self";
   const rc=S.countMode==="auto"?realRC:playerRC;
   const tc=getTrueCount(S.countMode==="auto"?realRC:playerRC);
+  h+=`<div style="flex-shrink:0;position:relative;z-index:2">`;
+  h+=dealerBaySVG();
+  // Badges overlaid on felt areas flanking the bay
+  h+=`<div style="position:absolute;left:6px;bottom:8px;display:flex;flex-direction:column;gap:2px">`;
+  h+=`<div class="bet-badge" style="font-size:10px;padding:2px 8px">Bet: $${totalBet}</div>`;
+  h+=`<div class="bet-badge" style="font-size:10px;padding:2px 8px;color:#aaa;border-color:rgba(255,255,255,.1)">Bank: $${cT(CI)}</div>`;
+  h+=`</div>`;
   if(showCount){
-    // Stacked layout: left=Bet/Bank, right=RC/TC
-    h+=`<div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1">`;
-    h+=`<div style="display:flex;flex-direction:column;gap:3px"><div class="bet-badge">Bet: $${totalBet}</div><div class="bet-badge" style="color:#aaa;border-color:rgba(255,255,255,.1)">Bank: $${cT(CI)}</div></div>`;
-    h+=`<div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end"><div class="bet-badge" style="color:#5dade2;border-color:rgba(93,173,226,.3)">RC: ${rc}</div><div class="bet-badge" style="color:#5dade2;border-color:rgba(93,173,226,.3)">TC: ${tc}</div></div>`;
+    h+=`<div style="position:absolute;right:6px;bottom:8px;display:flex;flex-direction:column;gap:2px;align-items:flex-end">`;
+    h+=`<div class="bet-badge" style="font-size:10px;padding:2px 8px;color:#5dade2;border-color:rgba(93,173,226,.3)">RC: ${rc}</div>`;
+    h+=`<div class="bet-badge" style="font-size:10px;padding:2px 8px;color:#5dade2;border-color:rgba(93,173,226,.3)">TC: ${tc}</div>`;
     h+=`</div>`;
-    // Bet suggestion in auto mode
-    if(S.countMode==="auto"&&tc>=2&&isBetting)h+=`<div style="text-align:center;font-size:11px;color:#f1c40f;position:relative;z-index:1;margin-top:2px">Count favors higher bet</div>`;
-    else if(S.countMode==="auto"&&tc<=-2&&isBetting)h+=`<div style="text-align:center;font-size:11px;color:#e74c3c;position:relative;z-index:1;margin-top:2px">Count favors minimum bet</div>`;
-  } else {
-    // Self-count: normal layout
-    h+=`<div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1"><div class="bet-badge">Bet: $${totalBet}</div><div class="bet-badge" style="color:#aaa;border-color:rgba(255,255,255,.1)">Bank: $${cT(CI)}</div></div>`;
   }
+  h+=`</div>`;
+  // Play surface
+  h+=`<div style="flex:1;display:flex;flex-direction:column;padding:6px 12px;gap:4px;overflow:auto;position:relative">`;
+  // "BLACKJACK PAYS" printed on felt
+  h+=`<div style="text-align:center;position:relative;z-index:1;margin-bottom:2px"><span style="font-size:10px;color:rgba(218,165,32,.4);font-family:Georgia,serif;letter-spacing:3px">BLACKJACK</span><br><span style="font-size:13px;color:rgba(218,165,32,.5);font-family:Georgia,serif;letter-spacing:2px;font-weight:700">PAYS ${bjPaysLabel()}</span></div>`;
+  // Bet suggestion in auto mode
+  if(S.countMode==="auto"&&tc>=2&&isBetting)h+=`<div style="text-align:center;font-size:11px;color:#f1c40f;position:relative;z-index:1">Count favors higher bet</div>`;
+  else if(S.countMode==="auto"&&tc<=-2&&isBetting)h+=`<div style="text-align:center;font-size:11px;color:#e74c3c;position:relative;z-index:1">Count favors minimum bet</div>`;
   if(!isBetting){
     h+=`<div style="text-align:center;position:relative;z-index:1"><div style="font-size:9px;color:rgba(218,165,32,.55);letter-spacing:2px;margin-bottom:4px">DEALER ${phase==="dealer"||phase==="result"?"• "+hv(DC):""}</div><div style="display:flex;justify-content:center;gap:6px">`;
     DC.forEach((c,i)=>{h+=cHTML(c,i===1&&(phase==="playing"||phase==="insurance"));});
