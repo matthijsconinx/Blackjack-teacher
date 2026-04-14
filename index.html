@@ -99,7 +99,7 @@ let CI={25:0,100:0,500:0},BC=[],cashBal=0;
 let phase="betting",PH=[[]],AHI=0,DC=[],HB=[0];
 let fb=null,shF=false,rMsg="",aTab="play",showCP=false;
 let MK=[],tTO=null;
-let ST={hp:0,hw:0,hl:0,hpu:0,bj:0,tb:0,tw:0,d:{hit:{c:0,t:0},stand:{c:0,t:0},double:{c:0,t:0},split:{c:0,t:0},surrender:{c:0,t:0}},pd:0,td:0};
+let ST={hp:0,hw:0,hl:0,hpu:0,bj:0,tb:0,tw:0,d:{hit:{c:0,t:0},stand:{c:0,t:0},double:{c:0,t:0},split:{c:0,t:0},surrender:{c:0,t:0}},pd:0,td:0,cc:{correct:0,total:0,totalErr:0,streak:0,bestStreak:0}};
 
 // ─── CARD COUNTING ──────────────────────────────────────────────
 let realRC=0,playerRC=0,countFb=null;
@@ -107,6 +107,14 @@ function hiLoVal(rank){const v=cv(rank);if(v>=2&&v<=6)return 1;if(v>=10||rank===
 function getTrueCount(rc){const decksRem=Math.max((S.numDecks*52-cd)/52, S.numDecks===1?1:0.5);return Math.round(rc/decksRem*10)/10;}
 function countCard(c){realRC+=hiLoVal(c.rank);}
 function resetCount(){realRC=0;playerRC=0;countFb=null;}
+function checkCount(){
+  const diff=playerRC-realRC;
+  ST.cc.total++;
+  ST.cc.totalErr+=Math.abs(diff);
+  if(diff===0){ST.cc.correct++;ST.cc.streak++;if(ST.cc.streak>ST.cc.bestStreak)ST.cc.bestStreak=ST.cc.streak;countFb={ok:true,msg:`Your count: ${playerRC} — Correct!`};}
+  else{ST.cc.streak=0;countFb={ok:false,msg:`Your count: ${playerRC} — Actual: ${realRC} (off by ${diff>0?"+":""}${diff})`};}
+  render();
+}
 
 // ─── SOUND ENGINE (Web Audio API) ───────────────────────────────
 let audioCtx=null;
@@ -285,7 +293,7 @@ function finishResolve(){
 }
 
 function rGame(){BR=S.startingBankroll;phase="betting";PH=[[]];DC=[];HB=[0];fb=null;rMsg="";cBet=0;BC=[];CI=b2c(BR);cashBal=0;rShuf();resetCount();toast("Settings applied — game reset!","#f1c40f");render();}
-function rStats(){ST={hp:0,hw:0,hl:0,hpu:0,bj:0,tb:0,tw:0,d:{hit:{c:0,t:0},stand:{c:0,t:0},double:{c:0,t:0},split:{c:0,t:0},surrender:{c:0,t:0}},pd:0,td:0};MK=[];toast("Stats cleared!","#e74c3c");render();}
+function rStats(){ST={hp:0,hw:0,hl:0,hpu:0,bj:0,tb:0,tw:0,d:{hit:{c:0,t:0},stand:{c:0,t:0},double:{c:0,t:0},split:{c:0,t:0},surrender:{c:0,t:0}},pd:0,td:0,cc:{correct:0,total:0,totalErr:0,streak:0,bestStreak:0}};MK=[];toast("Stats cleared!","#e74c3c");render();}
 
 // ─── RENDER ──────────────────────────────────────────────────────
 function render(){
@@ -449,7 +457,7 @@ function rPlay(){
     if(BR<S.minBet&&!BC.length)h+=`<div style="text-align:center;margin-top:10px;background:rgba(0,0,0,.4);border:1px solid #c0392b55;border-radius:12px;padding:14px 16px"><div style="font-size:16px;font-weight:700;color:#e74c3c;margin-bottom:4px">Out of chips!</div><div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:10px">You don't have enough to place the minimum bet of $${S.minBet}.</div><button onclick="rGame()" style="padding:10px 28px;border-radius:10px;background:linear-gradient(135deg,#c0392b,#962d22);border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Buy Back In — $${S.startingBankroll}</button></div>`;
   } else if(phase==="playing"){
     // Assisted count buttons
-    if(S.countMode==="assisted")h+=`<div style="display:flex;justify-content:center;gap:8px;margin-bottom:6px"><button onclick="playerRC--;render()" style="width:50px;padding:8px 0;border-radius:8px;background:rgba(231,76,60,.25);border:1px solid #e74c3c55;color:#e74c3c;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">−1</button><button onclick="render()" style="width:50px;padding:8px 0;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#aaa;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">0</button><button onclick="playerRC++;render()" style="width:50px;padding:8px 0;border-radius:8px;background:rgba(39,174,96,.25);border:1px solid #27ae6055;color:#27ae60;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">+1</button></div>`;
+    if(S.countMode==="assisted")h+=`<div style="display:flex;justify-content:center;gap:12px;margin-bottom:6px"><button onclick="playerRC--;render()" style="width:60px;padding:8px 0;border-radius:8px;background:rgba(231,76,60,.25);border:1px solid #e74c3c55;color:#e74c3c;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">−1</button><button onclick="playerRC++;render()" style="width:60px;padding:8px 0;border-radius:8px;background:rgba(39,174,96,.25);border:1px solid #27ae6055;color:#27ae60;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">+1</button></div>`;
     h+=`<div style="display:flex;flex-direction:column;gap:5px">`;
     h+=`<div style="display:flex;gap:5px">${aBtn("HIT","#e74c3c","act('hit')")}${aBtn("STAND","#27ae60","act('stand')")}</div>`;
     h+=`<div style="display:flex;gap:5px">`;
@@ -460,10 +468,10 @@ function rPlay(){
     h+=`</div></div>`;
   } else if(phase==="result"){
     // Assisted count buttons in result phase too
-    if(S.countMode==="assisted")h+=`<div style="display:flex;justify-content:center;gap:8px;margin-bottom:6px"><button onclick="playerRC--;render()" style="width:50px;padding:8px 0;border-radius:8px;background:rgba(231,76,60,.25);border:1px solid #e74c3c55;color:#e74c3c;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">−1</button><button onclick="render()" style="width:50px;padding:8px 0;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#aaa;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">0</button><button onclick="playerRC++;render()" style="width:50px;padding:8px 0;border-radius:8px;background:rgba(39,174,96,.25);border:1px solid #27ae6055;color:#27ae60;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">+1</button></div>`;
+    if(S.countMode==="assisted")h+=`<div style="display:flex;justify-content:center;gap:12px;margin-bottom:6px"><button onclick="playerRC--;render()" style="width:60px;padding:8px 0;border-radius:8px;background:rgba(231,76,60,.25);border:1px solid #e74c3c55;color:#e74c3c;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">−1</button><button onclick="playerRC++;render()" style="width:60px;padding:8px 0;border-radius:8px;background:rgba(39,174,96,.25);border:1px solid #27ae6055;color:#27ae60;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">+1</button></div>`;
     // Assisted count feedback shown after pressing NEXT HAND
     if(S.countMode==="assisted"&&!countFb){
-      h+=`<button class="dbtn" onclick="const diff=playerRC-realRC;countFb=diff===0?{ok:true,msg:'Your count: '+playerRC+' — Correct!'}:{ok:false,msg:'Your count: '+playerRC+' — Actual: '+realRC+' (off by '+(diff>0?'+':'')+diff+')'};render()" style="width:100%;background:linear-gradient(135deg,#2980b9,#1a5276);font-size:16px">CHECK COUNT</button>`;
+      h+=`<button class="dbtn" onclick="checkCount()" style="width:100%;background:linear-gradient(135deg,#2980b9,#1a5276);font-size:16px">CHECK COUNT</button>`;
     } else {
       h+=`<button class="dbtn" onclick="phase='betting';fb=null;shF=false;BC=[];cBet=0;countFb=null;render()" style="width:100%;background:linear-gradient(135deg,#2980b9,#1a5276);font-size:16px">NEXT HAND</button>`;
     }
@@ -530,6 +538,15 @@ function rStPg(){
   h+=`<h3 style="color:#e8e6df;font-size:14px;margin:16px 0 8px;font-family:Georgia,serif">Recent Mistakes</h3>`;
   if(!MK.length)h+=`<div style="color:#555;font-size:13px;font-style:italic">No mistakes yet!</div>`;
   else MK.slice(0,5).forEach(m=>{h+=`<div class="mc"><div style="display:flex;gap:4px;margin-bottom:4px">${m.pc.map(c=>cHTML(c,0,1)).join("")}<span style="color:#555;align-self:center;margin:0 4px">vs</span>${cHTML(m.du,0,1)}</div><span style="color:#e74c3c">You: ${m.ym}</span><span style="color:#555;margin:0 6px">→</span><span style="color:#27ae60">Optimal: ${m.om}</span></div>`;});
+  // Counting stats (only show if any counting data exists)
+  if(ST.cc.total>0){
+    const cAcc=(ST.cc.correct/ST.cc.total*100).toFixed(1);
+    const cAvgErr=(ST.cc.totalErr/ST.cc.total).toFixed(1);
+    const cAccColor=parseFloat(cAcc)>=90?"#27ae60":parseFloat(cAcc)>=70?"#f39c12":"#e74c3c";
+    h+=`<h3 style="color:#5dade2;font-size:14px;margin:16px 0 8px;font-family:Georgia,serif">Card Counting</h3>`;
+    h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">${sB("Accuracy",cAcc+"%",cAccColor)}${sB("Avg Error",cAvgErr)}${sB("Streak",ST.cc.streak)}${sB("Best Streak",ST.cc.bestStreak)}</div>`;
+    h+=`<div class="ar"><div class="al" style="width:90px">correct</div><div class="ab"><div class="af" style="width:${cAcc}%;background:#5dade2"></div></div><div class="ap">${ST.cc.correct}/${ST.cc.total}</div></div>`;
+  }
   h+=`</div>`;return h;
 }
 function sB(l,v,c){return`<div class="sb"><div class="sl">${l}</div><div class="sv" style="color:${c||"#e8e6df"}">${v}</div></div>`;}
