@@ -155,19 +155,14 @@ function playNoise(dur,vol){
 }
 function sndChip(){playNoise(0.06,0.1);playTone(800,0.05,"square",0.03);}
 function sndCard(){
-  if(!S.soundOn)return;try{const ac=getAC();
-  // Brief swoosh: filtered noise sweep
-  const buf=ac.createBuffer(1,ac.sampleRate*0.12,ac.sampleRate);
-  const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1);
-  const s=ac.createBufferSource();s.buffer=buf;
-  const g=ac.createGain();const f=ac.createBiquadFilter();
-  f.type="bandpass";f.frequency.value=2000;f.Q.value=0.5;
-  // Sweep the filter up for swoosh effect
-  f.frequency.setValueAtTime(800,ac.currentTime);
-  f.frequency.exponentialRampToValueAtTime(4000,ac.currentTime+0.06);
-  g.gain.setValueAtTime(0.12,ac.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.1);
-  s.connect(f);f.connect(g);g.connect(ac.destination);s.start();s.stop(ac.currentTime+0.12);
+  if(!S.soundOn)return;try{const a=getAC(),t=a.currentTime;
+  const buf=a.createBuffer(1,a.sampleRate*0.09,a.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++){const p=i/d.length;d[i]=(Math.random()*2-1)*Math.sin(p*Math.PI)*0.3;}
+  const s=a.createBufferSource();s.buffer=buf;
+  const f=a.createBiquadFilter();f.type="bandpass";f.frequency.value=3000;f.Q.value=0.8;
+  const g=a.createGain();g.gain.setValueAtTime(0.12,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.08);
+  s.connect(f);f.connect(g);g.connect(a.destination);s.start(t);s.stop(t+0.09);
   }catch(e){}
 }
 function sndDeal(){setTimeout(sndCard,50);setTimeout(sndCard,200);setTimeout(sndCard,350);setTimeout(sndCard,500);}
