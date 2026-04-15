@@ -343,15 +343,20 @@ function rGame(){BR=S.startingBankroll;phase="betting";PH=[[]];DC=[];HB=[0];fb=n
 function rStats(){ST={hp:0,hw:0,hl:0,hpu:0,bj:0,tb:0,tw:0,d:{hit:{c:0,t:0},stand:{c:0,t:0},double:{c:0,t:0},split:{c:0,t:0},surrender:{c:0,t:0}},pd:0,td:0,cc:{correct:0,total:0,totalErr:0,streak:0,bestStreak:0}};MK=[];toast("Stats cleared!","#e74c3c");render();}
 
 // ─── RENDER ──────────────────────────────────────────────────────
+let tabScroll={play:0,rules:0,stats:0,settings:0},prevTab="play";
 function render(){
   const el=document.getElementById("ct"),bv=document.getElementById("bdisp");
   BR=cT(CI)+bT();bv.textContent="$"+BR.toLocaleString();bv.style.color="#f1c40f";
   document.querySelectorAll(".tb").forEach(b=>b.classList.toggle("active",b.dataset.tab===aTab));
+  // Save scroll position of previous tab
+  if(prevTab!==aTab){tabScroll[prevTab]=el.scrollTop;prevTab=aTab;}
   if(aTab==="play")el.innerHTML=rPlay();
   else if(aTab==="rules")el.innerHTML=rRules();
   else if(aTab==="stats")el.innerHTML=rStPg();
   else if(aTab==="settings")el.innerHTML=rSePg();
   document.getElementById("oc").innerHTML=showCP?rCPop():"";
+  // Restore scroll position
+  el.scrollTop=tabScroll[aTab]||0;
 }
 
 function bjPaysLabel(){return S.blackjackPays===1.5?"3 TO 2":S.blackjackPays===1.2?"6 TO 5":"2 TO 1";}
@@ -473,17 +478,20 @@ function rPlay(){
     if(cBet>0&&cBet<S.minBet)h+=`<div style="font-size:11px;color:#e74c3c;margin-top:4px">Min bet: $${S.minBet}</div>`;
     h+=`</div>`;
   } else {
+    const multi=PH.length>1;
+    if(multi)h+=`<div style="display:flex;gap:6px">`;
     PH.forEach((hand,hi)=>{
       const isActive=phase==="playing"&&hi===AHI;
       const isDimmed=phase==="playing"&&hi!==AHI;
-      const glowStyle=isActive&&PH.length>1?"animation:handGlow 1.5s ease-in-out infinite;":"";
-      const borderStyle=isActive&&PH.length>1?"border-color:rgba(218,165,32,.4);":"";
-      h+=`<div style="background:rgba(0,0,0,.15);border:1px solid rgba(218,165,32,.2);border-radius:12px;padding:10px;text-align:center;margin-bottom:6px;opacity:${isDimmed?0.45:1};${borderStyle}${glowStyle}">`;
-      if(PH.length>1)h+=`<div style="font-size:10px;color:rgba(218,165,32,.5);margin-bottom:4px">Hand ${hi+1} • $${HB[hi]}</div>`;
+      const glowStyle=isActive&&multi?"animation:handGlow 1.5s ease-in-out infinite;":"";
+      const borderStyle=isActive&&multi?"border-color:rgba(218,165,32,.4);":"";
+      h+=`<div style="flex:1;background:rgba(0,0,0,.15);border:1px solid rgba(218,165,32,.2);border-radius:12px;padding:${multi?'6px':'10px'};text-align:center;opacity:${isDimmed?0.45:1};${borderStyle}${glowStyle}">`;
+      if(multi)h+=`<div style="font-size:9px;color:rgba(218,165,32,.5);margin-bottom:3px">Hand ${hi+1} • $${HB[hi]}</div>`;
       const v=hv(hand),sf=isS(hand)&&v<=21?" (soft)":"";
-      h+=`<div style="font-size:11px;color:rgba(218,165,32,.5);margin-bottom:6px;letter-spacing:1px">${PH.length===1?"YOUR HAND":""} • ${v}${sf}</div>`;
-      h+=`<div style="display:flex;justify-content:center;gap:6px">${hand.map(c=>cHTML(c)).join("")}</div></div>`;
+      h+=`<div style="font-size:${multi?'10px':'11px'};color:rgba(218,165,32,.5);margin-bottom:${multi?'3px':'6px'};letter-spacing:1px">${multi?"":""} ${v}${sf}</div>`;
+      h+=`<div style="display:flex;justify-content:center;gap:${multi?'3px':'6px'};flex-wrap:wrap">${hand.map(c=>cHTML(c,false,multi)).join("")}</div></div>`;
     });
+    if(multi)h+=`</div>`;
   }
   h+=`</div>`; // close betting circle or player hands inner
   h+=`</div>`; // close scrollable middle
@@ -592,8 +600,8 @@ function rChart(){
   for(let t=13;t<=20;t++){const r=SOFT[t];h+=row(`A,${t-11}`,r.map(a=>a.length>1?a:a[0]));}
   h+=`<div style="font-size:12px;font-weight:600;color:#e8e6df;margin:10px 0 4px">Pairs</div>`+hdr();
   for(let v=2;v<=10;v++)h+=row(`${v},${v}`,PAIR[v]);h+=row("A,A",PAIR[11]);
-  h+=`<div class="lg">`;[["H","Hit"],["S","Stand"],["D","Double"],["P","Split"],["R","Surr/Hit"],["RS","Surr/Stand"],["DS","Dbl/Stand"]].forEach(([k,v])=>{h+=`<div class="li"><div class="ls" style="background:${CM[k]||"#555"}cc"></div><span style="color:#aaa">${v}</span></div>`;});
-  h+=`</div><div style="font-size:11px;color:#a09d93;margin-top:6px;line-height:1.5"><b style="color:#c8c4b8">DS</b> = Double if allowed, otherwise Stand. <b style="color:#c8c4b8">RS</b> = Surrender if allowed, otherwise Stand.</div></div>`;return h;
+  h+=`<div class="lg">`;[["H","Hit"],["S","Stand"],["D","Double"],["P","Split"],["R","Surrender/Hit"],["RS","Surrender/Stand"],["DS","Double/Stand"]].forEach(([k,v])=>{h+=`<div class="li"><div class="ls" style="background:${CM[k]||"#555"}cc;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff">${k}</div><span style="color:#aaa">${v}</span></div>`;});
+  h+=`</div><div style="font-size:11px;color:#a09d93;margin-top:6px;line-height:1.5"><b style="color:#c8c4b8">R</b> = Surrender if allowed, otherwise Hit. <b style="color:#c8c4b8">DS</b> = Double if allowed, otherwise Stand. <b style="color:#c8c4b8">RS</b> = Surrender if allowed, otherwise Stand.</div></div>`;return h;
 }
 
 function rStPg(){
