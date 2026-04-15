@@ -212,8 +212,7 @@ function getReason(optAction,pc,du){
   if(t===12)return"Hit — the dealer is strong and 12 isn't enough to compete.";
   if(optAction==="double"&&(t===10||t===11))return(t===11?"11":"10")+" is the best doubling hand. High chance of making "+(t===11?"21":"20")+" with one card.";
   if(optAction==="double"&&t===9)return"9 is strong against a weak dealer. One more card likely gives you 19-20.";
-  if(optAction==="hit"&&t>=9&&t<=11)return"Doubling would be ideal here, but hitting is the next best play.";
-  if(t<=8)return"Your total is too low to stand. You can't bust, so take another card.";
+  if(t<=11)return"Your total can't bust. Take another card to improve your hand.";
   return"Play according to basic strategy for the best long-term results.";
 }
 
