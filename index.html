@@ -402,8 +402,9 @@ function render(){
   BR=cT(CI)+(phase==="betting"?bT():HB.reduce((s,b)=>s+b,0));
   bv.textContent="$"+BR.toLocaleString();bv.style.color="#f1c40f";
   document.querySelectorAll(".tb").forEach(b=>b.classList.toggle("active",b.dataset.tab===aTab));
-  // Save scroll position of previous tab
-  if(prevTab!==aTab){tabScroll[prevTab]=el.scrollTop;prevTab=aTab;}
+  // Save scroll position before re-render
+  if(prevTab===aTab)tabScroll[aTab]=el.scrollTop;
+  else{tabScroll[prevTab]=el.scrollTop;prevTab=aTab;}
   if(aTab==="play")el.innerHTML=rPlay();
   else if(aTab==="rules")el.innerHTML=rRules();
   else if(aTab==="stats")el.innerHTML=rStPg();
