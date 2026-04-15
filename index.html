@@ -377,8 +377,23 @@ function applyPayout(){
   pendingPayout=null;BR=cT(CI);
 }
 
-function rGame(){BR=S.startingBankroll;phase="betting";PH=[[]];DC=[];HB=[0];HBC=[[]];fb=null;rMsg="";cBet=0;BC=[];CI=b2c(BR);cashBal=0;rShuf();resetCount();toast("Settings applied — game reset!","#f1c40f");render();}
-function rStats(){ST={hp:0,hw:0,hl:0,hpu:0,bj:0,tb:0,tw:0,d:{hit:{c:0,t:0},stand:{c:0,t:0},double:{c:0,t:0},split:{c:0,t:0},surrender:{c:0,t:0}},pd:0,td:0,cc:{correct:0,total:0,totalErr:0,streak:0,bestStreak:0}};MK=[];toast("Stats cleared!","#e74c3c");render();}
+// ─── SESSION STORAGE ─────────────────────────────────────────────
+function saveSession(){
+  if(ST.hp===0)return;
+  const sessions=loadSessions();
+  const acc=ST.td>0?(ST.pd/ST.td*100):0;
+  const wr=ST.hp>0?(ST.hw/ST.hp*100):0;
+  const np=cT(CI)+cashBal+(phase==="betting"?bT():HB.reduce((s,b)=>s+b,0))-S.startingBankroll;
+  sessions.unshift({date:Date.now(),hands:ST.hp,accuracy:Math.round(acc*10)/10,winRate:Math.round(wr*10)/10,net:Math.round(np)});
+  if(sessions.length>15)sessions.length=15;
+  try{localStorage.setItem("bj_sessions",JSON.stringify(sessions));}catch(e){}
+}
+function loadSessions(){try{return JSON.parse(localStorage.getItem("bj_sessions"))||[];}catch(e){return[];}}
+function deleteSession(i){const s=loadSessions();s.splice(i,1);try{localStorage.setItem("bj_sessions",JSON.stringify(s));}catch(e){}render();}
+function clearAllSessions(){try{localStorage.removeItem("bj_sessions");}catch(e){}toast("Session history cleared","#e74c3c");render();}
+
+function rGame(){saveSession();BR=S.startingBankroll;phase="betting";PH=[[]];DC=[];HB=[0];HBC=[[]];fb=null;rMsg="";cBet=0;BC=[];CI=b2c(BR);cashBal=0;rShuf();resetCount();rStats();toast("Settings applied — game reset!","#f1c40f");render();}
+function rStats(){ST={hp:0,hw:0,hl:0,hpu:0,bj:0,tb:0,tw:0,d:{hit:{c:0,t:0},stand:{c:0,t:0},double:{c:0,t:0},split:{c:0,t:0},surrender:{c:0,t:0}},pd:0,td:0,cc:{correct:0,total:0,totalErr:0,streak:0,bestStreak:0}};MK=[];render();}
 
 // ─── RENDER ──────────────────────────────────────────────────────
 let tabScroll={play:0,rules:0,stats:0,settings:0},prevTab="play";
@@ -646,14 +661,13 @@ function rChart(){
 function rStPg(){
   const acc=ST.td>0?(ST.pd/ST.td*100).toFixed(1):"—";const wr=ST.hp>0?(ST.hw/ST.hp*100).toFixed(1):"—";const np=BR-S.startingBankroll;
   const ac=parseFloat(acc)>=90?"#27ae60":parseFloat(acc)>=70?"#f39c12":"#e74c3c";const pc=np>=0?"#27ae60":"#e74c3c";
-  let h=`<div style="padding:12px 16px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h2 style="color:#f1c40f;font-size:18px;margin:0;font-family:Georgia,serif">Performance</h2><button onclick="rStats()" style="padding:6px 14px;border-radius:8px;background:#c0392b33;border:1px solid #c0392b55;color:#e74c3c;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Reset Stats</button></div>`;
+  let h=`<div style="padding:12px 16px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h2 style="color:#f1c40f;font-size:18px;margin:0;font-family:Georgia,serif">Current Session</h2><button onclick="saveSession();rStats();toast('Session saved','#27ae60')" style="padding:6px 14px;border-radius:8px;background:rgba(39,174,96,.15);border:1px solid #27ae6055;color:#27ae60;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Save & New Session</button></div>`;
   h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">${sB("Hands",ST.hp)}${sB("Win Rate",wr+"%")}${sB("Accuracy",acc+"%",ac)}${sB("Blackjacks",ST.bj)}${sB("Net","$"+(np>=0?"+":"")+np,pc)}${sB("Shoe",Math.round(cd/(S.numDecks*52)*100)+"%")}</div>`;
   h+=`<h3 style="color:#e8e6df;font-size:14px;margin:0 0 8px;font-family:Georgia,serif">Accuracy by Decision</h3>`;
   ["hit","stand","double","split","surrender"].forEach(a=>{const d=ST.d[a];const p=d.t>0?(d.c/d.t*100).toFixed(0):"—";const w=d.t>0?(d.c/d.t*100):0;h+=`<div class="ar"><div class="al">${a}</div><div class="ab"><div class="af" style="width:${w}%"></div></div><div class="ap">${p==="—"?"—":p+"%"} <span style="font-size:10px;color:#666">(${d.t})</span></div></div>`;});
   h+=`<h3 style="color:#e8e6df;font-size:14px;margin:16px 0 8px;font-family:Georgia,serif">Recent Mistakes</h3>`;
   if(!MK.length)h+=`<div style="color:#555;font-size:13px;font-style:italic">No mistakes yet!</div>`;
   else MK.slice(0,5).forEach(m=>{h+=`<div class="mc"><div style="display:flex;gap:4px;margin-bottom:4px">${m.pc.map(c=>cHTML(c,0,1)).join("")}<span style="color:#555;align-self:center;margin:0 4px">vs</span>${cHTML(m.du,0,1)}</div><span style="color:#e74c3c">You: ${m.ym}</span><span style="color:#555;margin:0 6px">→</span><span style="color:#27ae60">Optimal: ${m.om}</span></div>`;});
-  // Counting stats (only show if any counting data exists)
   if(ST.cc.total>0){
     const cAcc=(ST.cc.correct/ST.cc.total*100).toFixed(1);
     const cAvgErr=(ST.cc.totalErr/ST.cc.total).toFixed(1);
@@ -661,6 +675,30 @@ function rStPg(){
     h+=`<h3 style="color:#5dade2;font-size:14px;margin:16px 0 8px;font-family:Georgia,serif">Card Counting</h3>`;
     h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">${sB("Accuracy",cAcc+"%",cAccColor)}${sB("Avg Error",cAvgErr)}${sB("Streak",ST.cc.streak)}${sB("Best Streak",ST.cc.bestStreak)}</div>`;
     h+=`<div class="ar"><div class="al" style="width:90px">correct</div><div class="ab"><div class="af" style="width:${cAcc}%;background:#5dade2"></div></div><div class="ap">${ST.cc.correct}/${ST.cc.total}</div></div>`;
+  }
+  // Previous sessions
+  const sessions=loadSessions();
+  h+=`<div style="display:flex;justify-content:space-between;align-items:center;margin:20px 0 12px"><h2 style="color:#f1c40f;font-size:18px;margin:0;font-family:Georgia,serif">Previous Sessions</h2>`;
+  if(sessions.length)h+=`<button onclick="clearAllSessions()" style="padding:6px 14px;border-radius:8px;background:#c0392b33;border:1px solid #c0392b55;color:#e74c3c;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Clear All</button>`;
+  h+=`</div>`;
+  if(!sessions.length){
+    h+=`<div style="color:#555;font-size:13px;font-style:italic">No previous sessions. Tap "Save & New Session" above or reset your bankroll in settings to save a session.</div>`;
+  } else {
+    sessions.forEach((s,i)=>{
+      const d=new Date(s.date);
+      const dateStr=d.toLocaleDateString(undefined,{month:"short",day:"numeric"})+", "+d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});
+      const accC=s.accuracy>=90?"#27ae60":s.accuracy>=70?"#f39c12":"#e74c3c";
+      const netC=s.net>=0?"#27ae60":"#e74c3c";
+      h+=`<div style="background:#1a2744;border:1px solid #2a3f5f;border-radius:10px;padding:10px 12px;margin-bottom:8px;position:relative">`;
+      h+=`<button onclick="deleteSession(${i})" style="position:absolute;top:8px;right:10px;background:none;border:none;color:#555;font-size:16px;cursor:pointer;padding:2px 6px;line-height:1">✕</button>`;
+      h+=`<div style="font-size:11px;color:#7a8ba3;margin-bottom:6px">${dateStr}</div>`;
+      h+=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">`;
+      h+=`<div><div style="font-size:9px;color:#7a8ba3;letter-spacing:.5px">HANDS</div><div style="font-size:16px;font-weight:700;font-family:Georgia,serif;color:#e8e6df">${s.hands}</div></div>`;
+      h+=`<div><div style="font-size:9px;color:#7a8ba3;letter-spacing:.5px">ACCURACY</div><div style="font-size:16px;font-weight:700;font-family:Georgia,serif;color:${accC}">${s.accuracy}%</div></div>`;
+      h+=`<div><div style="font-size:9px;color:#7a8ba3;letter-spacing:.5px">WIN RATE</div><div style="font-size:16px;font-weight:700;font-family:Georgia,serif;color:#e8e6df">${s.winRate}%</div></div>`;
+      h+=`<div><div style="font-size:9px;color:#7a8ba3;letter-spacing:.5px">NET</div><div style="font-size:16px;font-weight:700;font-family:Georgia,serif;color:${netC}">$${s.net>=0?"+":""}${s.net}</div></div>`;
+      h+=`</div></div>`;
+    });
   }
   h+=`</div>`;return h;
 }
@@ -670,9 +708,11 @@ function rSePg(){
   let h=`<div style="padding:12px 16px"><h2 style="color:#f1c40f;font-size:18px;margin:0 0 16px;font-family:Georgia,serif">Settings</h2>`;
   h+=sN("Number of Decks",S.numDecks,1,8,`const n=+this.value;if(n>=1&&n<=8)S.numDecks=n;render()`);
   h+=`<div class="sr"><div class="sh"><span class="srl">Penetration %</span><span class="srv">${S.penetration}</span></div><input type="range" min="50" max="95" value="${S.penetration}" oninput="S.penetration=+this.value;render()"></div>`;
+  h+=`<div style="margin-bottom:14px"><button onclick="rShuf();resetCount();toast('Shoe reshuffled','#f1c40f')" style="padding:6px 14px;border-radius:8px;background:rgba(241,196,15,.12);border:1px solid #f1c40f44;color:#f1c40f;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Reshuffle shoe</button></div>`;
   h+=sN("Starting Bankroll",S.startingBankroll,100,100000,`const n=Math.round(+this.value/100)*100;if(n>=100){S.startingBankroll=n;this.value=n;}render()`,100);
   h+=sN("Minimum Bet",S.minBet,25,1000,`const n=Math.round(+this.value/25)*25;if(n>=25){S.minBet=n;this.value=n;}render()`,25);
   h+=sN("Maximum Bet",S.maxBet,25,10000,`const n=Math.round(+this.value/25)*25;if(n>=S.minBet){S.maxBet=n;this.value=n;}render()`,25);
+  h+=`<div style="margin-bottom:14px"><button onclick="saveSession();BR=S.startingBankroll;CI=b2c(BR);cashBal=0;BC=[];cBet=0;phase='betting';rStats();toast('Bankroll reset to $'+S.startingBankroll,'#f1c40f')" style="padding:6px 14px;border-radius:8px;background:rgba(241,196,15,.12);border:1px solid #f1c40f44;color:#f1c40f;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Reset bankroll</button></div>`;
   h+=`<div class="st"><span style="font-size:13px;color:#c8c4b8">Dealer Hits Soft 17</span><div class="tt" onclick="S.dealerHitsSoft17=!S.dealerHitsSoft17;render()" style="background:${S.dealerHitsSoft17?"#27ae60":"#2a3f5f"}"><div class="ttb" style="transform:translateX(${S.dealerHitsSoft17?22:0}px)"></div></div></div>`;
   const bl=S.blackjackPays===1.5?"3:2":S.blackjackPays===1.2?"6:5":"2:1";
   h+=`<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:#c8c4b8">Blackjack Pays</span><button onclick="S.blackjackPays=S.blackjackPays===1.5?1.2:S.blackjackPays===1.2?2.0:1.5;render()" style="padding:6px 16px;border-radius:8px;cursor:pointer;background:#1a2744;border:1px solid #f1c40f55;color:#f1c40f;font-size:14px;font-weight:700;font-family:inherit">${bl} ⟳</button></div></div>`;
@@ -680,8 +720,7 @@ function rSePg(){
   const cmLabels={self:"Self-count",assisted:"Assisted",auto:"Auto-count"};
   const cmDesc=S.countMode==="self"?"Count in your head — no display":S.countMode==="assisted"?"Use +1/0/−1 buttons, get accuracy feedback":"RC and TC update automatically";
   h+=`<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:#c8c4b8">Card Counting</span><button onclick="S.countMode=S.countMode==='self'?'assisted':S.countMode==='assisted'?'auto':'self';resetCount();render()" style="padding:6px 16px;border-radius:8px;cursor:pointer;background:#1a2744;border:1px solid #5dade255;color:#5dade2;font-size:13px;font-weight:700;font-family:inherit">${cmLabels[S.countMode]} ⟳</button></div><div style="font-size:10px;color:#666;margin-top:4px">${cmDesc}</div></div>`;
-  h+=`<div style="margin-top:20px"><button onclick="rGame()" style="width:100%;padding:14px 0;border-radius:10px;background:linear-gradient(135deg,#c0392b,#962d22);border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.5px;font-family:inherit">Apply & Reset Game</button></div>`;
-  h+=`<div style="margin-top:16px;padding:12px;background:#1a2744;border-radius:10px;font-size:11px;color:#666;line-height:1.5"><b style="color:#888">Note:</b> Changes to deck/penetration take effect on next shuffle. Applying resets the game.</div></div>`;return h;
+  h+=`<div style="margin-top:16px;padding:12px;background:#1a2744;border-radius:10px;font-size:11px;color:#666;line-height:1.5"><b style="color:#888">Note:</b> Most settings take effect on the next hand. Use the buttons above to reshuffle the shoe or reset your bankroll when needed.</div></div>`;return h;
 }
 function sN(l,v,mn,mx,oc,step){return`<div class="sr"><div class="sh"><span class="srl">${l}</span><span class="srv">${v}</span></div><input type="number" min="${mn}" max="${mx}" step="${step||1}" value="${v}" onchange="${oc}"></div>`;}
 
