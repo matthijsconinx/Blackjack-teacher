@@ -154,7 +154,22 @@ function playNoise(dur,vol){
   s.connect(f);f.connect(g);g.connect(ac.destination);s.start();s.stop(ac.currentTime+dur);}catch(e){}
 }
 function sndChip(){playNoise(0.06,0.1);playTone(800,0.05,"square",0.03);}
-function sndCard(){playNoise(0.08,0.08);}
+function sndCard(){
+  if(!S.soundOn)return;try{const ac=getAC();
+  // Brief swoosh: filtered noise sweep
+  const buf=ac.createBuffer(1,ac.sampleRate*0.12,ac.sampleRate);
+  const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1);
+  const s=ac.createBufferSource();s.buffer=buf;
+  const g=ac.createGain();const f=ac.createBiquadFilter();
+  f.type="bandpass";f.frequency.value=2000;f.Q.value=0.5;
+  // Sweep the filter up for swoosh effect
+  f.frequency.setValueAtTime(800,ac.currentTime);
+  f.frequency.exponentialRampToValueAtTime(4000,ac.currentTime+0.06);
+  g.gain.setValueAtTime(0.12,ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.1);
+  s.connect(f);f.connect(g);g.connect(ac.destination);s.start();s.stop(ac.currentTime+0.12);
+  }catch(e){}
+}
 function sndDeal(){setTimeout(sndCard,50);setTimeout(sndCard,200);setTimeout(sndCard,350);setTimeout(sndCard,500);}
 function sndWin(){playTone(523,0.12,"sine",0.08);setTimeout(()=>playTone(659,0.12,"sine",0.08),100);setTimeout(()=>playTone(784,0.2,"sine",0.1),200);}
 function sndLose(){playTone(330,0.2,"sine",0.06);setTimeout(()=>playTone(262,0.3,"sine",0.06),150);}
@@ -250,13 +265,13 @@ function breakChip(d){if(CI[d]<=0)return;CI[d]--;
   else if(d===200){CI[100]+=2;}
   else if(d===100){CI[50]+=2;}
   else if(d===50){CI[25]+=2;}
-  showCP=false;render();}
+  render();}
 function consolidate(d){
   if(d===50&&CI[25]>=2){CI[25]-=2;CI[50]++;}
   else if(d===100&&CI[50]>=2){CI[50]-=2;CI[100]++;}
   else if(d===200&&CI[100]>=2){CI[100]-=2;CI[200]++;}
   else if(d===500&&CI[200]>=2&&CI[100]>=1){CI[200]-=2;CI[100]-=1;CI[500]++;}
-  showCP=false;render();}
+  render();}
 function deductInv(amt){
   const fc=Math.min(cashBal,amt);cashBal-=fc;let rem=amt-fc;
   for(const d of DENOMS){const tk=Math.min(CI[d],Math.floor(rem/d));CI[d]-=tk;rem-=tk*d;}
@@ -397,11 +412,12 @@ function rPlay(){
   h+=dealerBaySVG();
   h+=`</div>`;
   // Play surface
-  h+=`<div style="flex:1;display:flex;flex-direction:column;padding:6px 12px;gap:4px;overflow:auto;position:relative">`;
+  h+=`<div style="flex:1;display:flex;flex-direction:column;padding:0 12px;position:relative">`;
+  // ─── FIXED TOP: badges + dealer (never compressed) ───
+  h+=`<div style="flex-shrink:0;padding:6px 0">`;
   // BLACKJACK PAYS — always perfectly centered
   h+=`<div style="position:relative;z-index:1;min-height:30px">`;
   h+=`<div style="text-align:center"><span style="font-size:9px;color:rgba(218,165,32,.4);font-family:Georgia,serif;letter-spacing:2px">BLACKJACK</span><br><span style="font-size:11px;color:rgba(218,165,32,.5);font-family:Georgia,serif;letter-spacing:1px;font-weight:700">PAYS ${bjPaysLabel()}</span></div>`;
-  // Badges absolutely positioned so they don't shift the centered text
   if(showCount){
     h+=`<div style="position:absolute;left:0;top:0;display:flex;flex-direction:column;gap:2px"><div class="bet-badge" style="font-size:10px;padding:2px 8px">Bet: $${totalBet}</div><div class="bet-badge" style="font-size:10px;padding:2px 8px;color:#aaa;border-color:rgba(255,255,255,.1)">Bank: $${cT(CI)}</div></div>`;
     h+=`<div style="position:absolute;right:0;top:0;display:flex;flex-direction:column;gap:2px;align-items:flex-end"><div class="bet-badge" style="font-size:10px;padding:2px 8px;color:#5dade2;border-color:rgba(93,173,226,.3)">RC: ${rc}</div><div class="bet-badge" style="font-size:10px;padding:2px 8px;color:#5dade2;border-color:rgba(93,173,226,.3)">TC: ${tc}</div></div>`;
@@ -410,7 +426,6 @@ function rPlay(){
     h+=`<div style="position:absolute;right:0;top:50%;transform:translateY(-50%)"><div class="bet-badge" style="font-size:10px;padding:2px 8px;color:#aaa;border-color:rgba(255,255,255,.1)">Bank: $${cT(CI)}</div></div>`;
   }
   h+=`</div>`;
-  // Bet suggestion in auto mode
   if(S.countMode==="auto"&&tc>=2&&isBetting)h+=`<div style="text-align:center;font-size:11px;color:#f1c40f;position:relative;z-index:1">Count favors higher bet</div>`;
   else if(S.countMode==="auto"&&tc<=-2&&isBetting)h+=`<div style="text-align:center;font-size:11px;color:#e74c3c;position:relative;z-index:1">Count favors minimum bet</div>`;
   if(!isBetting){
@@ -420,10 +435,12 @@ function rPlay(){
   } else {
     h+=`<div style="text-align:center;position:relative;z-index:1"><div style="font-size:9px;color:rgba(218,165,32,.45);letter-spacing:2px;margin:4px 0">DEALER</div></div>`;
   }
+  h+=`</div>`;
+  // ─── SCROLLABLE MIDDLE: feedback + player hands ───
+  h+=`<div style="flex:1;overflow:auto;display:flex;flex-direction:column;gap:4px;position:relative">`;
   if(!isBetting){
     if(fb){const anim=fbId!==lastFbId?"animation:fadeIn .3s ease;":"";lastFbId=fbId;h+=`<div class="fbb" style="border:1px solid ${fb.color}55;position:relative;z-index:1;${anim}"><span style="font-weight:700;color:${fb.color};font-size:14px">${fb.label}</span><span style="font-size:12px;color:#bbb;margin-left:8px">${fb.message}</span></div>`;}
     if(phase==="result"&&rMsg)h+=`<div class="rbb" style="position:relative;z-index:1">${rMsg}</div>`;
-    // Assisted count feedback at end of hand
     if(phase==="result"&&S.countMode==="assisted"&&countFb)h+=`<div style="background:rgba(0,0,0,.4);border:1px solid ${countFb.ok?"#27ae6055":"#e74c3c55"};border-radius:10px;padding:8px 12px;text-align:center;position:relative;z-index:1;font-size:13px;color:${countFb.ok?"#27ae60":"#e74c3c"}">${countFb.msg}</div>`;
     if(phase==="insurance")h+=`<div class="ibb" style="position:relative;z-index:1"><div style="font-size:14px;font-weight:600;color:#bb8fce;margin-bottom:8px">Insurance? (Half your bet)</div><div style="display:flex;gap:10px;justify-content:center"><button onclick="insure(true)" style="padding:10px 24px;border-radius:8px;background:#8e44ad;border:none;color:#fff;font-weight:600;cursor:pointer;font-family:inherit">Yes</button><button onclick="insure(false)" style="padding:10px 24px;border-radius:8px;background:#2c3e50;border:none;color:#fff;font-weight:600;cursor:pointer;font-family:inherit">No</button></div></div>`;
     if(shF&&phase==="playing")h+=`<div class="hbb" style="position:relative;z-index:1">Hint — Optimal: <b>${opt?.toUpperCase()}</b></div>`;
@@ -472,8 +489,9 @@ function rPlay(){
       h+=`<div style="display:flex;justify-content:center;gap:6px">${hand.map(c=>cHTML(c)).join("")}</div></div>`;
     });
   }
-  h+=`</div>`;
-  h+=`<div style="position:relative;z-index:1;flex-shrink:0;padding-bottom:4px">`;
+  h+=`</div>`; // close betting circle or player hands inner
+  h+=`</div>`; // close scrollable middle
+  h+=`<div style="position:relative;z-index:1;flex-shrink:0;padding:4px 0">`;
   if(isBetting){
     const canD=cBet>=S.minBet,canR=BC.length>0;
     h+=`<div style="display:flex;gap:6px;margin-bottom:6px">`;
