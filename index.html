@@ -93,11 +93,11 @@ const HARD={5:["H","H","H","H","H","H","H","H","H","H"],6:["H","H","H","H","H","
 const SOFT={13:["H","H","H","D","D","H","H","H","H","H"],14:["H","H","H","D","D","H","H","H","H","H"],15:["H","H","D","D","D","H","H","H","H","H"],16:["H","H","D","D","D","H","H","H","H","H"],17:["H","D","D","D","D","H","H","H","H","H"],18:["DS","DS","DS","DS","DS","S","S","H","H","H"],19:["S","S","S","S","DS","S","S","S","S","S"],20:["S","S","S","S","S","S","S","S","S","S"],21:["S","S","S","S","S","S","S","S","S","S"]};
 const PAIR={2:["P","P","P","P","P","P","H","H","H","H"],3:["P","P","P","P","P","P","H","H","H","H"],4:["H","H","H","P","P","H","H","H","H","H"],5:["D","D","D","D","D","D","D","D","H","H"],6:["P","P","P","P","P","H","H","H","H","H"],7:["P","P","P","P","P","P","H","H","H","H"],8:["P","P","P","P","P","P","P","P","P","P"],9:["P","P","P","P","P","S","P","P","S","S"],10:["S","S","S","S","S","S","S","S","S","S"],11:["P","P","P","P","P","P","P","P","P","P"]};
 
-let S={numDecks:6,penetration:75,startingBankroll:1000,minBet:25,maxBet:500,dealerHitsSoft17:true,blackjackPays:1.5,soundOn:false,countMode:"self"};
+let S={numDecks:6,penetration:75,startingBankroll:1000,minBet:25,maxBet:500,dealerHitsSoft17:true,blackjackPays:1.5,soundOn:false,countMode:"auto"};
 const CARD_DELAY=1000;
 let shoe=[],cd=0,BR=1000,cBet=0;
 let CI={25:0,100:0,500:0},BC=[],cashBal=0;
-let phase="betting",PH=[[]],AHI=0,DC=[],HB=[0];
+let phase="betting",PH=[[]],AHI=0,DC=[],HB=[0],HBC=[[]];
 let fb=null,shF=false,rMsg="",aTab="play",showCP=false;
 let MK=[],tTO=null;
 let ST={hp:0,hw:0,hl:0,hpu:0,bj:0,tb:0,tw:0,d:{hit:{c:0,t:0},stand:{c:0,t:0},double:{c:0,t:0},split:{c:0,t:0},surrender:{c:0,t:0}},pd:0,td:0,cc:{correct:0,total:0,totalErr:0,streak:0,bestStreak:0}};
@@ -281,7 +281,26 @@ function addInv(amt){
   const ca=Math.floor(amt/25)*25;const fr=amt-ca;
   const ch=b2c(ca);for(const k in ch)CI[k]+=ch[k];
   cashBal+=fr;while(cashBal>=25){cashBal-=25;CI[25]++;}
-  cashBal=Math.round(cashBal*100)/100;BR=cT(CI);
+  cashBal=Math.round(cashBal*100)/100;autoC();BR=cT(CI);
+}
+function addInvByChips(chips,mult){
+  const g={};chips.forEach(c=>{g[c.denom]=(g[c.denom]||0)+1;});
+  for(const d in g)CI[d]+=g[d]*mult;autoC();BR=cT(CI);
+}
+function addBJPayout(chips,payRate){
+  const g={};chips.forEach(c=>{g[c.denom]=(g[c.denom]||0)+1;});
+  for(const d in g)CI[d]+=g[d];
+  const betAmt=chips.reduce((s,c)=>s+c.denom,0);
+  const winnings=betAmt*payRate;
+  let rem=winnings;
+  for(const d of DENOMS){if(g[d]){const whole=Math.floor(g[d]*d*payRate/d);CI[d]+=whole;rem-=whole*d;}}
+  if(rem>0.01)addInv(rem);
+  autoC();BR=cT(CI);
+}
+function autoC(){
+  while(CI[25]>=6){CI[25]-=2;CI[50]++;}
+  while(CI[50]>=6){CI[50]-=2;CI[100]++;}
+  while(CI[100]>=6){CI[100]-=2;CI[200]++;}
 }
 
 // Game
@@ -290,7 +309,7 @@ function canDb(){const h=PH[AHI];return h&&h.length===2&&cT(CI)>=HB[AHI];}
 function canSr(){const h=PH[AHI];return h&&h.length===2&&PH.length===1;}
 function gOpt(){const h=PH[AHI];if(!h||!h.length||!DC[0])return"stand";return gOA(h,DC[0].rank,canSp(),canDb(),canSr());}
 
-function deal(){if(cBet<S.minBet){toast(`Min bet: $${S.minBet}`,"#e74c3c");return;}if(needsS()){rShuf();resetCount();}fb=null;shF=false;rMsg="";countFb=null;const bet=cBet;const p1=draw(),d1=draw(),p2=draw(),d2=draw();PH=[[p1,p2]];DC=[d1,d2];HB=[bet];AHI=0;BR=cT(CI);sndDeal();countCard(p1);countCard(d1);countCard(p2);if(d1.rank==="A"){phase="insurance";render();return;}if(hv([p1,p2])===21){phase="dealer";render();setTimeout(resolveStep,CARD_DELAY);return;}phase="playing";render();}
+function deal(){if(cBet<S.minBet){toast(`Min bet: $${S.minBet}`,"#e74c3c");return;}if(needsS()){rShuf();resetCount();}fb=null;shF=false;rMsg="";countFb=null;const bet=cBet;const betChips=[...BC];const p1=draw(),d1=draw(),p2=draw(),d2=draw();PH=[[p1,p2]];DC=[d1,d2];HB=[bet];HBC=[betChips];AHI=0;BR=cT(CI);sndDeal();countCard(p1);countCard(d1);countCard(p2);if(d1.rank==="A"){phase="insurance";render();return;}if(hv([p1,p2])===21){phase="dealer";render();setTimeout(resolveStep,CARD_DELAY);return;}phase="playing";render();}
 
 function insure(take){const cost=HB[0]/2;if(take){deductInv(cost);fb={rating:"bad",label:"Mistake",message:"Should decline — insurance has a ~7.7% house edge. It's a side bet that loses long-term.",color:"#e74c3c"};}else fb={rating:"good",label:"Perfect",message:"Decline is correct — insurance has a ~7.7% house edge regardless of your hand.",color:"#27ae60"};fbId++;if(hv(DC)===21){if(take)addInv(cost*3);phase="dealer";render();setTimeout(finishResolve,CARD_DELAY);return;}if(hv(PH[0])===21){phase="dealer";render();setTimeout(resolveStep,CARD_DELAY);return;}phase="playing";render();}
 
@@ -301,7 +320,7 @@ function act(a){if(acting)return;const o=gOpt(),h=PH[AHI],bet=HB[AHI];const mr=r
 if(a==="hit"){acting=true;render();setTimeout(()=>{const nc=draw();PH[AHI]=[...h,nc];countCard(nc);sndCard();acting=false;if(hv(PH[AHI])>21)sndBust();if(hv(PH[AHI])>=21)advance();else render();},CARD_DELAY);}
 else if(a==="stand")advance();
 else if(a==="double"){deductInv(bet);HB[AHI]=bet*2;acting=true;render();setTimeout(()=>{const nc=draw();PH[AHI]=[...h,nc];countCard(nc);sndCard();acting=false;advance();},CARD_DELAY);}
-else if(a==="split"){deductInv(bet);acting=true;render();setTimeout(()=>{const c1=h[0],c2=h[1];const nc1=draw(),nc2=draw();PH[AHI]=[c1,nc1];PH.splice(AHI+1,0,[c2,nc2]);HB.splice(AHI+1,0,bet);countCard(nc1);countCard(nc2);sndCard();acting=false;if(c1.rank==="A"){advance(AHI+2);return;}if(hv(PH[AHI])===21)advance();else render();},CARD_DELAY);}
+else if(a==="split"){deductInv(bet);acting=true;render();setTimeout(()=>{const c1=h[0],c2=h[1];const nc1=draw(),nc2=draw();PH[AHI]=[c1,nc1];PH.splice(AHI+1,0,[c2,nc2]);HB.splice(AHI+1,0,bet);HBC.splice(AHI+1,0,[...HBC[AHI]]);countCard(nc1);countCard(nc2);sndCard();acting=false;if(c1.rank==="A"){advance(AHI+2);return;}if(hv(PH[AHI])===21)advance();else render();},CARD_DELAY);}
 else if(a==="surrender"){addInv(bet/2);HB[AHI]=0;rMsg="Hand surrendered. Half bet returned.";phase="result";ST.hp++;ST.hl++;ST.tb+=bet;BR=cT(CI);render();}}
 
 function advance(fi){const ni=fi!==undefined?fi:AHI+1;if(ni<PH.length){AHI=ni;render();return;}phase="dealer";render();setTimeout(resolveStep,CARD_DELAY);}
@@ -323,14 +342,14 @@ function resolveStep(){
 
 function finishResolve(){
   const dt=hv(DC),dbj=DC.length===2&&dt===21;let res=[];
-  PH.forEach((h,i)=>{const bet=HB[i];if(!bet)return;const pt=hv(h),pbj=h.length===2&&pt===21&&PH.length===1;ST.hp++;ST.tb+=bet;
+  PH.forEach((h,i)=>{const bet=HB[i],bc=HBC[i]||[];if(!bet)return;const pt=hv(h),pbj=h.length===2&&pt===21&&PH.length===1;ST.hp++;ST.tb+=bet;
   if(pt>21){res.push({i,r:"bust"});ST.hl++;}
-  else if(pbj&&dbj){res.push({i,r:"push"});addInv(bet);ST.hpu++;}
-  else if(pbj){const p=bet+bet*S.blackjackPays;res.push({i,r:"bj",p});addInv(p);ST.hw++;ST.bj++;ST.tw+=p;}
+  else if(pbj&&dbj){res.push({i,r:"push"});addInvByChips(bc,1);ST.hpu++;}
+  else if(pbj){const p=bet+bet*S.blackjackPays;res.push({i,r:"bj",p});addBJPayout(bc,S.blackjackPays);ST.hw++;ST.bj++;ST.tw+=p;}
   else if(dbj){res.push({i,r:"lose"});ST.hl++;}
-  else if(dt>21){res.push({i,r:"win"});addInv(bet*2);ST.hw++;ST.tw+=bet*2;}
-  else if(pt>dt){res.push({i,r:"win"});addInv(bet*2);ST.hw++;ST.tw+=bet*2;}
-  else if(pt===dt){res.push({i,r:"push"});addInv(bet);ST.hpu++;}
+  else if(dt>21){res.push({i,r:"win"});addInvByChips(bc,2);ST.hw++;ST.tw+=bet*2;}
+  else if(pt>dt){res.push({i,r:"win"});addInvByChips(bc,2);ST.hw++;ST.tw+=bet*2;}
+  else if(pt===dt){res.push({i,r:"push"});addInvByChips(bc,1);ST.hpu++;}
   else{res.push({i,r:"lose"});ST.hl++;}});
   BR=cT(CI);rMsg=res.map(r=>{if(r.r==="bj")return`Blackjack! +$${(r.p-HB[r.i]).toFixed(0)}`;if(r.r==="win")return`Win! +$${HB[r.i]}`;if(r.r==="push")return"Push.";if(r.r==="bust")return`Bust! -$${HB[r.i]}`;return`Lose. -$${HB[r.i]}`;}).join(" | ");
   const hasWin=res.some(r=>r.r==="win"),hasBJ=res.some(r=>r.r==="bj"),hasLose=res.some(r=>r.r==="lose"||r.r==="bust");
@@ -339,7 +358,7 @@ function finishResolve(){
   phase="result";render();
 }
 
-function rGame(){BR=S.startingBankroll;phase="betting";PH=[[]];DC=[];HB=[0];fb=null;rMsg="";cBet=0;BC=[];CI=b2c(BR);cashBal=0;rShuf();resetCount();toast("Settings applied — game reset!","#f1c40f");render();}
+function rGame(){BR=S.startingBankroll;phase="betting";PH=[[]];DC=[];HB=[0];HBC=[[]];fb=null;rMsg="";cBet=0;BC=[];CI=b2c(BR);cashBal=0;rShuf();resetCount();toast("Settings applied — game reset!","#f1c40f");render();}
 function rStats(){ST={hp:0,hw:0,hl:0,hpu:0,bj:0,tb:0,tw:0,d:{hit:{c:0,t:0},stand:{c:0,t:0},double:{c:0,t:0},split:{c:0,t:0},surrender:{c:0,t:0}},pd:0,td:0,cc:{correct:0,total:0,totalErr:0,streak:0,bestStreak:0}};MK=[];toast("Stats cleared!","#e74c3c");render();}
 
 // ─── RENDER ──────────────────────────────────────────────────────
