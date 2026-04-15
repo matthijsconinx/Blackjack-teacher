@@ -182,25 +182,26 @@ function gOA(pc,du,cs,cd2,cr){const i=dui(du),t=hv(pc);if(cs&&isP(pc)){const pr=
 
 function getReason(optAction,pc,du){
   const t=hv(pc),soft=isS(pc),pair=isP(pc),di=dui(du),dv=cv(du),weak=dv>=2&&dv<=6;
-  // Pairs — only when split is the optimal action
+  // Pairs — split is optimal
   if(pair&&optAction==="split"){
     const pv=cv(pc[0].rank);
     if(pv===11)return"Two chances at 21 is far better than a soft 12.";
     if(pv===8)return"16 is the worst hand in blackjack. Two fresh 8s give you a much better chance.";
-    if(pv===10)return"20 is an excellent hand. Splitting throws away a near-certain win.";
-    if(pv===5)return"Treat 5-5 as a hard 10. Doubling is much stronger than splitting into two weak hands.";
-    return weak?"Low pairs against a weak dealer give you two chances to beat a likely bust.":"Split this pair to improve your chances against this dealer card.";
+    if(pv===9)return"Each 9 is one card away from 19. Splitting gives two strong hands.";
+    return"Your pair total is weak. Splitting gives two chances while the dealer is likely to bust.";
   }
-  // Pair but optimal is NOT split (e.g., stand on 10-10, hit on 4-4 vs strong)
+  // Pairs — don't split
   if(pair&&optAction!=="split"){
     const pv=cv(pc[0].rank);
-    if(pv===10)return"20 is an excellent hand. Splitting throws away a near-certain win.";
-    if(pv===5)return"Treat 5-5 as a hard 10. Doubling is much stronger than splitting into two weak hands.";
-    if(pv<=7&&!weak)return"Don't split against a strong dealer — it doubles your exposure. Play as a hard total.";
-    // Fall through to normal hand logic below
+    if(pv===10)return"20 is too strong to break up. Keep the winning hand.";
+    if(pv===9)return"18 is a strong hand. Don't break it up against this dealer card.";
+    if(pv===4)return"8 is better played as one hand — hit to improve rather than splitting into two weak 4s.";
+    if(pv<=7&&pv!==5&&!weak)return"Don't split against a strong dealer — it doubles your exposure. Play as a hard total.";
+    // 5,5 and other pairs fall through to normal hand logic
   }
   // Soft hands
   if(soft){
+    if(t===19&&optAction==="double")return"19 is strong but you can't bust — doubling against a 6 is free extra profit.";
     if(t>=19)return"Soft 19+ is too strong to risk changing.";
     if(t===18&&weak&&optAction==="double")return"Soft 18 against a weak dealer is a great double — you can't bust and the dealer is likely to lose.";
     if(t===18&&!weak&&optAction==="hit")return"Soft 18 isn't strong enough vs a strong dealer. Being soft means you can safely try to improve.";
