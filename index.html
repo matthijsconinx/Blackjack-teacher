@@ -74,7 +74,7 @@
   <div id="tc"></div><div id="oc"></div>
   <div class="tabs">
     <button class="tb active" data-tab="play"><span class="ti">🃏</span><span class="tl">Play</span></button>
-    <button class="tb" data-tab="rules"><span class="ti">📖</span><span class="tl">Rules</span></button>
+    <button class="tb" data-tab="rules"><span class="ti">📖</span><span class="tl">Guide</span></button>
     <button class="tb" data-tab="stats"><span class="ti">📊</span><span class="tl">Stats</span></button>
     <button class="tb" data-tab="settings"><span class="ti">⚙️</span><span class="tl">Settings</span></button>
   </div>
@@ -544,21 +544,21 @@ function aBtn(l,c,oc){return`<button class="abtn" onclick="${oc}" style="backgro
 
 function rRules(){
   const bp=S.blackjackPays===1.5?"3:2 (bet $100, win $150)":S.blackjackPays===1.2?"6:5 (bet $100, win $120)":"2:1 (bet $100, win $200)";
-  let h=`<div style="padding:12px 16px;font-size:13px;line-height:1.6;color:#c8c4b8"><h2 style="color:#f1c40f;font-size:18px;margin:0 0 12px;font-family:Georgia,serif">Blackjack Rules</h2>`;
+  let h=`<div style="padding:12px 16px;font-size:13px;line-height:1.6;color:#c8c4b8"><h2 style="color:#f1c40f;font-size:18px;margin:0 0 12px;font-family:Georgia,serif">Blackjack Guide</h2>`;
   h+=sec("Objective","Beat the dealer by getting closer to 21 without going over. Exceed 21 and you bust — losing immediately.");
   h+=sec("Card Values","2–10 = face value. J, Q, K = 10. Ace = 11 or 1. A hand with an Ace as 11 is \"soft\" (e.g., A+6 = soft 17).");
   h+=sec("Dealer Rules","Dealer must hit on 16 or below, stand on hard 17+. With \"Dealer Hits Soft 17\" the dealer also hits soft 17 (A+6).");
   h+=sec("Your Options",`<b style="color:#e74c3c">Hit</b> — Take another card. Example: 10+4=14 vs dealer 10, hit and get 5 for 19.<br><br><b style="color:#27ae60">Stand</b> — Keep your hand. Example: K+8=18 vs dealer 6, stand — dealer likely busts.<br><br><b style="color:#f39c12">Double Down</b> — Double bet, get exactly one card. Example: 6+5=11 vs dealer 7, double for 21.<br><br><b style="color:#3498db">Split</b> — Equal-value pair becomes two hands. Example: 8+8=16, split and play each independently.<br><br><b style="color:#8e44ad">Surrender</b> — Forfeit half bet. First action only. Example: 16 vs dealer 10.<br><br><b style="color:#bb8fce">Insurance</b> — Dealer shows Ace: side bet at half stake. Always decline (~7.7% house edge).`);
   h+=sec("Blackjack",`A+10-value on first two cards. Pays ${bp}. Both have BJ = push.`);
+  h+=`<h2 style="color:#f1c40f;font-size:18px;margin:20px 0 12px;font-family:Georgia,serif">Basic Strategy Chart</h2>`;
+  h+=`<div style="font-size:11px;color:#888;margin-bottom:8px">${S.numDecks} decks • ${S.penetration}% penetration • Dealer ${S.dealerHitsSoft17?"hits":"stands on"} soft 17 • BJ pays ${S.blackjackPays===1.5?"3:2":S.blackjackPays===1.2?"6:5":"2:1"}</div>`;
+  h+=rChart();
   h+=`<h2 style="color:#f1c40f;font-size:18px;margin:20px 0 12px;font-family:Georgia,serif">Card Counting (Hi-Lo)</h2>`;
   h+=sec("The Concept","Card counting tracks the ratio of high to low cards remaining in the shoe. When more high cards (10s, face cards, aces) remain, the player has an edge — blackjacks are more likely and the dealer busts more often on stiff hands.");
   h+=sec("Hi-Lo Values","As each card is dealt, assign a value: <b style=\"color:#27ae60\">2–6 = +1</b> (low card removed, good for player), <b style=\"color:#aaa\">7–9 = 0</b> (neutral), <b style=\"color:#e74c3c\">10/J/Q/K/A = −1</b> (high card removed, bad for player). Keep a running total — this is the <b style=\"color:#5dade2\">Running Count (RC)</b>.");
   h+=sec("True Count","The running count alone doesn't account for how many cards are left. Divide the RC by the number of decks remaining to get the <b style=\"color:#5dade2\">True Count (TC)</b>. Example: RC of +6 with 2 decks left = TC of +3.");
   h+=sec("How It Shifts the Odds","With basic strategy, the house edge is roughly 0.5%. Each +1 in true count shifts the edge about 0.5% toward the player. At TC +2, the game is roughly even. At TC +3 or higher, the player has a meaningful 1–1.5% edge.");
   h+=sec("Using the Count","<b style=\"color:#f1c40f\">Bet sizing</b> — This is where the money is made. Bet more when the TC is high (+2 or above), bet minimum when it's low or negative.<br><br><b style=\"color:#f1c40f\">Strategy deviations</b> — Some plays change at high counts. For example, take insurance at TC +3 (normally always decline), stand on 16 vs 10 at higher counts, or double on hands you normally wouldn't.<br><br><b style=\"color:#f1c40f\">Important</b> — Only count cards you can see. The dealer's face-down hole card is not counted until it's revealed.");
-  h+=`<h2 style="color:#f1c40f;font-size:18px;margin:20px 0 12px;font-family:Georgia,serif">Basic Strategy Chart</h2>`;
-  h+=`<div style="font-size:11px;color:#888;margin-bottom:8px">${S.numDecks} decks • ${S.penetration}% penetration • Dealer ${S.dealerHitsSoft17?"hits":"stands on"} soft 17 • BJ pays ${S.blackjackPays===1.5?"3:2":S.blackjackPays===1.2?"6:5":"2:1"}</div>`;
-  h+=rChart();
   h+=`<h2 style="color:#f1c40f;font-size:18px;margin:20px 0 12px;font-family:Georgia,serif">Glossary</h2>`;
   const gl=[
     ["Bust","Going over 21 — an automatic loss."],
