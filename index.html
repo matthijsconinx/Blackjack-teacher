@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Blackjack Teacher</title>
+<title>Blackjack Teacher v2</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-  body { background: #0a1628; font-family: 'Trebuchet MS', 'Lucida Grande', sans-serif; color: #e8e6df; overflow: hidden; }
+  body { background: #0a1628; font-family: 'Trebuchet MS', 'Lucida Grande', sans-serif; color: #e8e6df; }
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-thumb { background: #2a3f5f; border-radius: 4px; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
@@ -69,7 +69,7 @@
 </head>
 <body>
 <div id="app">
-  <div class="top-bar"><div class="title">♠ Blackjack Teacher</div><div class="ba"><span style="color:#7a8ba3">Bankroll</span><span id="bdisp" style="font-weight:700;font-family:Georgia,serif">$1,000</span></div></div>
+  <div class="top-bar"><div class="title">♠ Blackjack Teacher v2</div><div class="ba"><span style="color:#7a8ba3">Bankroll</span><span id="bdisp" style="font-weight:700;font-family:Georgia,serif;color:#f1c40f">$1,000</span></div></div>
   <div class="content" id="ct"></div>
   <div id="tc"></div><div id="oc"></div>
   <div class="tabs">
@@ -93,7 +93,8 @@ const HARD={5:["H","H","H","H","H","H","H","H","H","H"],6:["H","H","H","H","H","
 const SOFT={13:["H","H","H","D","D","H","H","H","H","H"],14:["H","H","H","D","D","H","H","H","H","H"],15:["H","H","D","D","D","H","H","H","H","H"],16:["H","H","D","D","D","H","H","H","H","H"],17:["H","D","D","D","D","H","H","H","H","H"],18:["DS","DS","DS","DS","DS","S","S","H","H","H"],19:["S","S","S","S","DS","S","S","S","S","S"],20:["S","S","S","S","S","S","S","S","S","S"],21:["S","S","S","S","S","S","S","S","S","S"]};
 const PAIR={2:["P","P","P","P","P","P","H","H","H","H"],3:["P","P","P","P","P","P","H","H","H","H"],4:["H","H","H","P","P","H","H","H","H","H"],5:["D","D","D","D","D","D","D","D","H","H"],6:["P","P","P","P","P","H","H","H","H","H"],7:["P","P","P","P","P","P","H","H","H","H"],8:["P","P","P","P","P","P","P","P","P","P"],9:["P","P","P","P","P","S","P","P","S","S"],10:["S","S","S","S","S","S","S","S","S","S"],11:["P","P","P","P","P","P","P","P","P","P"]};
 
-let S={numDecks:6,penetration:75,startingBankroll:1000,minBet:25,maxBet:500,dealerHitsSoft17:true,blackjackPays:1.5,soundOn:false,cardDelay:1000,countMode:"self"};
+let S={numDecks:6,penetration:75,startingBankroll:1000,minBet:25,maxBet:500,dealerHitsSoft17:true,blackjackPays:1.5,soundOn:false,countMode:"self"};
+const CARD_DELAY=1000;
 let shoe=[],cd=0,BR=1000,cBet=0;
 let CI={25:0,100:0,500:0},BC=[],cashBal=0;
 let phase="betting",PH=[[]],AHI=0,DC=[],HB=[0];
@@ -216,7 +217,7 @@ function getReason(optAction,pc,du){
   return"Play according to basic strategy for the best long-term results.";
 }
 
-function rM(pa,oa,pc,du,bet){if(pa===oa)return{rating:"good",label:"Perfect",color:"#27ae60"};if([pa==="hit"&&oa==="double",pa==="stand"&&oa==="surrender",pa==="hit"&&oa==="split"&&hv(pc)<=16].some(Boolean))return{rating:"medium",label:"Okay",color:"#f39c12"};return{rating:"bad",label:"Mistake",color:"#e74c3c"};}
+function rM(pa,oa,pc,du,bet){if(pa===oa)return{rating:"good",label:"Perfect",color:"#27ae60"};return{rating:"bad",label:"Mistake",color:"#e74c3c"};}
 
 function mkShoe(n){const s=[];for(let d=0;d<n;d++)for(const su of SUITS)for(const r of RANKS)s.push({rank:r,suit:su});for(let i=s.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[s[i],s[j]]=[s[j],s[i]];}return s;}
 function rShuf(){shoe=mkShoe(S.numDecks);cd=0;}
@@ -289,21 +290,21 @@ function canDb(){const h=PH[AHI];return h&&h.length===2&&cT(CI)>=HB[AHI];}
 function canSr(){const h=PH[AHI];return h&&h.length===2&&PH.length===1;}
 function gOpt(){const h=PH[AHI];if(!h||!h.length||!DC[0])return"stand";return gOA(h,DC[0].rank,canSp(),canDb(),canSr());}
 
-function deal(){if(cBet<S.minBet){toast(`Min bet: $${S.minBet}`,"#e74c3c");return;}if(needsS()){rShuf();resetCount();}fb=null;shF=false;rMsg="";countFb=null;const bet=cBet;const p1=draw(),d1=draw(),p2=draw(),d2=draw();PH=[[p1,p2]];DC=[d1,d2];HB=[bet];AHI=0;BR=cT(CI);sndDeal();countCard(p1);countCard(d1);countCard(p2);if(d1.rank==="A"){phase="insurance";render();return;}if(hv([p1,p2])===21){phase="dealer";render();setTimeout(resolveStep,S.cardDelay);return;}phase="playing";render();}
+function deal(){if(cBet<S.minBet){toast(`Min bet: $${S.minBet}`,"#e74c3c");return;}if(needsS()){rShuf();resetCount();}fb=null;shF=false;rMsg="";countFb=null;const bet=cBet;const p1=draw(),d1=draw(),p2=draw(),d2=draw();PH=[[p1,p2]];DC=[d1,d2];HB=[bet];AHI=0;BR=cT(CI);sndDeal();countCard(p1);countCard(d1);countCard(p2);if(d1.rank==="A"){phase="insurance";render();return;}if(hv([p1,p2])===21){phase="dealer";render();setTimeout(resolveStep,CARD_DELAY);return;}phase="playing";render();}
 
-function insure(take){const cost=HB[0]/2;if(take){deductInv(cost);fb={rating:"bad",label:"Mistake",message:"Should decline — insurance has a ~7.7% house edge. It's a side bet that loses long-term.",color:"#e74c3c"};}else fb={rating:"good",label:"Perfect",message:"Decline is correct — insurance has a ~7.7% house edge regardless of your hand.",color:"#27ae60"};fbId++;if(hv(DC)===21){if(take)addInv(cost*3);phase="dealer";render();setTimeout(finishResolve,S.cardDelay);return;}if(hv(PH[0])===21){phase="dealer";render();setTimeout(resolveStep,S.cardDelay);return;}phase="playing";render();}
+function insure(take){const cost=HB[0]/2;if(take){deductInv(cost);fb={rating:"bad",label:"Mistake",message:"Should decline — insurance has a ~7.7% house edge. It's a side bet that loses long-term.",color:"#e74c3c"};}else fb={rating:"good",label:"Perfect",message:"Decline is correct — insurance has a ~7.7% house edge regardless of your hand.",color:"#27ae60"};fbId++;if(hv(DC)===21){if(take)addInv(cost*3);phase="dealer";render();setTimeout(finishResolve,CARD_DELAY);return;}if(hv(PH[0])===21){phase="dealer";render();setTimeout(resolveStep,CARD_DELAY);return;}phase="playing";render();}
 
 function recD(a,o){const ic=a===o;ST.td++;if(ic)ST.pd++;if(ST.d[a]){ST.d[a].t++;if(ic)ST.d[a].c++;}if(!ic){MK.unshift({pc:[...PH[AHI]],du:DC[0],ym:a,om:o});if(MK.length>10)MK.length=10;}}
 
 let acting=false,lastFbId=0,fbId=0;
 function act(a){if(acting)return;const o=gOpt(),h=PH[AHI],bet=HB[AHI];const mr=rM(a,o,h,DC[0].rank,bet);const reason=getReason(o,h,DC[0].rank);let msg;if(mr.rating==="good")msg=`${a[0].toUpperCase()+a.slice(1)} is correct — ${reason}`;else msg=`Should ${o} — ${reason}`;fb={...mr,message:msg};fbId++;recD(a,o);shF=false;
-if(a==="hit"){acting=true;render();setTimeout(()=>{const nc=draw();PH[AHI]=[...h,nc];countCard(nc);sndCard();acting=false;if(hv(PH[AHI])>21)sndBust();if(hv(PH[AHI])>=21)advance();else render();},S.cardDelay);}
+if(a==="hit"){acting=true;render();setTimeout(()=>{const nc=draw();PH[AHI]=[...h,nc];countCard(nc);sndCard();acting=false;if(hv(PH[AHI])>21)sndBust();if(hv(PH[AHI])>=21)advance();else render();},CARD_DELAY);}
 else if(a==="stand")advance();
-else if(a==="double"){deductInv(bet);HB[AHI]=bet*2;acting=true;render();setTimeout(()=>{const nc=draw();PH[AHI]=[...h,nc];countCard(nc);sndCard();acting=false;advance();},S.cardDelay);}
-else if(a==="split"){deductInv(bet);acting=true;render();setTimeout(()=>{const c1=h[0],c2=h[1];const nc1=draw(),nc2=draw();PH[AHI]=[c1,nc1];PH.splice(AHI+1,0,[c2,nc2]);HB.splice(AHI+1,0,bet);countCard(nc1);countCard(nc2);sndCard();acting=false;if(c1.rank==="A"){advance(AHI+2);return;}if(hv(PH[AHI])===21)advance();else render();},S.cardDelay);}
+else if(a==="double"){deductInv(bet);HB[AHI]=bet*2;acting=true;render();setTimeout(()=>{const nc=draw();PH[AHI]=[...h,nc];countCard(nc);sndCard();acting=false;advance();},CARD_DELAY);}
+else if(a==="split"){deductInv(bet);acting=true;render();setTimeout(()=>{const c1=h[0],c2=h[1];const nc1=draw(),nc2=draw();PH[AHI]=[c1,nc1];PH.splice(AHI+1,0,[c2,nc2]);HB.splice(AHI+1,0,bet);countCard(nc1);countCard(nc2);sndCard();acting=false;if(c1.rank==="A"){advance(AHI+2);return;}if(hv(PH[AHI])===21)advance();else render();},CARD_DELAY);}
 else if(a==="surrender"){addInv(bet/2);HB[AHI]=0;rMsg="Hand surrendered. Half bet returned.";phase="result";ST.hp++;ST.hl++;ST.tb+=bet;BR=cT(CI);render();}}
 
-function advance(fi){const ni=fi!==undefined?fi:AHI+1;if(ni<PH.length){AHI=ni;render();return;}phase="dealer";render();setTimeout(resolveStep,S.cardDelay);}
+function advance(fi){const ni=fi!==undefined?fi:AHI+1;if(ni<PH.length){AHI=ni;render();return;}phase="dealer";render();setTimeout(resolveStep,CARD_DELAY);}
 
 let holeCardCounted=false;
 function resolveStep(){
@@ -314,7 +315,7 @@ function resolveStep(){
   const needsHit=hv(DC)<17||(S.dealerHitsSoft17&&hv(DC)===17&&isS(DC));
   if(needsHit){
     const nc=draw();DC=[...DC,nc];countCard(nc);sndCard();render();
-    setTimeout(resolveStep,S.cardDelay);
+    setTimeout(resolveStep,CARD_DELAY);
   } else {
     finishResolve();
   }
@@ -344,7 +345,7 @@ function rStats(){ST={hp:0,hw:0,hl:0,hpu:0,bj:0,tb:0,tw:0,d:{hit:{c:0,t:0},stand
 // ─── RENDER ──────────────────────────────────────────────────────
 function render(){
   const el=document.getElementById("ct"),bv=document.getElementById("bdisp");
-  BR=cT(CI)+bT();bv.textContent="$"+BR.toLocaleString();bv.style.color=BR>=S.startingBankroll?"#27ae60":"#e74c3c";
+  BR=cT(CI)+bT();bv.textContent="$"+BR.toLocaleString();bv.style.color="#f1c40f";
   document.querySelectorAll(".tb").forEach(b=>b.classList.toggle("active",b.dataset.tab===aTab));
   if(aTab==="play")el.innerHTML=rPlay();
   else if(aTab==="rules")el.innerHTML=rRules();
@@ -396,7 +397,7 @@ function rPlay(){
   const isBetting=phase==="betting";
   const opt=phase==="playing"?gOpt():null;
   const totalBet=isBetting?cBet:HB.reduce((s,b)=>s+b,0);
-  let h=`<div style="flex:1;display:flex;flex-direction:column;overflow:hidden;border:6px solid #b8884c;border-radius:4px;position:relative;background:radial-gradient(ellipse at 50% 40%,#1a6b3c,#145a30 50%,#0d3f22 80%,#082a16)">`;
+  let h=`<div style="flex:1;display:flex;flex-direction:column;overflow:auto;border:6px solid #b8884c;border-radius:4px;position:relative;background:radial-gradient(ellipse at 50% 40%,#1a6b3c,#145a30 50%,#0d3f22 80%,#082a16)">`;
   // Felt texture over entire table
   h+=`<div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.012) 0px,rgba(255,255,255,.012) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:0"></div>`;
   // Dealer bay with badge overlays
@@ -629,7 +630,6 @@ function rSePg(){
   const bl=S.blackjackPays===1.5?"3:2":S.blackjackPays===1.2?"6:5":"2:1";
   h+=`<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:#c8c4b8">Blackjack Pays</span><button onclick="S.blackjackPays=S.blackjackPays===1.5?1.2:S.blackjackPays===1.2?2.0:1.5;render()" style="padding:6px 16px;border-radius:8px;cursor:pointer;background:#1a2744;border:1px solid #f1c40f55;color:#f1c40f;font-size:14px;font-weight:700;font-family:inherit">${bl} ⟳</button></div></div>`;
   h+=`<div class="st"><span style="font-size:13px;color:#c8c4b8">Sound Effects</span><div class="tt" onclick="S.soundOn=!S.soundOn;if(S.soundOn)sndChip();render()" style="background:${S.soundOn?"#27ae60":"#2a3f5f"}"><div class="ttb" style="transform:translateX(${S.soundOn?22:0}px)"></div></div></div>`;
-  h+=`<div class="sr"><div class="sh"><span class="srl">Card Delay</span><span class="srv">${S.cardDelay<1000?(S.cardDelay+"ms"):(S.cardDelay/1000).toFixed(S.cardDelay%1000?"2":"1")+"s"}</span></div><input type="range" min="250" max="2000" step="250" value="${S.cardDelay}" oninput="S.cardDelay=+this.value;render()"></div>`;
   const cmLabels={self:"Self-count",assisted:"Assisted",auto:"Auto-count"};
   const cmDesc=S.countMode==="self"?"Count in your head — no display":S.countMode==="assisted"?"Use +1/0/−1 buttons, get accuracy feedback":"RC and TC update automatically";
   h+=`<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:#c8c4b8">Card Counting</span><button onclick="S.countMode=S.countMode==='self'?'assisted':S.countMode==='assisted'?'auto':'self';resetCount();render()" style="padding:6px 16px;border-radius:8px;cursor:pointer;background:#1a2744;border:1px solid #5dade255;color:#5dade2;font-size:13px;font-weight:700;font-family:inherit">${cmLabels[S.countMode]} ⟳</button></div><div style="font-size:10px;color:#666;margin-top:4px">${cmDesc}</div></div>`;
