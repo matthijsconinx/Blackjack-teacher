@@ -182,15 +182,22 @@ function gOA(pc,du,cs,cd2,cr){const i=dui(du),t=hv(pc);if(cs&&isP(pc)){const pr=
 
 function getReason(optAction,pc,du){
   const t=hv(pc),soft=isS(pc),pair=isP(pc),di=dui(du),dv=cv(du),weak=dv>=2&&dv<=6;
-  // Pairs
-  if(pair){
+  // Pairs — only when split is the optimal action
+  if(pair&&optAction==="split"){
     const pv=cv(pc[0].rank);
     if(pv===11)return"Two chances at 21 is far better than a soft 12.";
     if(pv===8)return"16 is the worst hand in blackjack. Two fresh 8s give you a much better chance.";
     if(pv===10)return"20 is an excellent hand. Splitting throws away a near-certain win.";
     if(pv===5)return"Treat 5-5 as a hard 10. Doubling is much stronger than splitting into two weak hands.";
-    if(optAction==="split")return weak?"Low pairs against a weak dealer give you two chances to beat a likely bust.":"Split this pair to improve your chances against this dealer card.";
+    return weak?"Low pairs against a weak dealer give you two chances to beat a likely bust.":"Split this pair to improve your chances against this dealer card.";
+  }
+  // Pair but optimal is NOT split (e.g., stand on 10-10, hit on 4-4 vs strong)
+  if(pair&&optAction!=="split"){
+    const pv=cv(pc[0].rank);
+    if(pv===10)return"20 is an excellent hand. Splitting throws away a near-certain win.";
+    if(pv===5)return"Treat 5-5 as a hard 10. Doubling is much stronger than splitting into two weak hands.";
     if(pv<=7&&!weak)return"Don't split against a strong dealer — it doubles your exposure. Play as a hard total.";
+    // Fall through to normal hand logic below
   }
   // Soft hands
   if(soft){
@@ -318,9 +325,9 @@ let acting=false,lastFbId=0,fbId=0;
 function act(a){if(acting)return;const o=gOpt(),h=PH[AHI],bet=HB[AHI];const mr=rM(a,o,h,DC[0].rank,bet);const reason=getReason(o,h,DC[0].rank);let msg;if(mr.rating==="good")msg=`${a[0].toUpperCase()+a.slice(1)} is correct — ${reason}`;else msg=`Should ${o} — ${reason}`;fb={...mr,message:msg};fbId++;recD(a,o);shF=false;
 if(a==="hit"){acting=true;render();setTimeout(()=>{const nc=draw();PH[AHI]=[...h,nc];countCard(nc);sndCard();acting=false;if(hv(PH[AHI])>21)sndBust();if(hv(PH[AHI])>=21)advance();else render();},CARD_DELAY);}
 else if(a==="stand")advance();
-else if(a==="double"){deductInv(bet);HB[AHI]=bet*2;acting=true;render();setTimeout(()=>{const nc=draw();PH[AHI]=[...h,nc];countCard(nc);sndCard();acting=false;advance();},CARD_DELAY);}
+else if(a==="double"){deductInv(bet);HB[AHI]=bet*2;HBC[AHI]=[...HBC[AHI],...HBC[AHI]];acting=true;render();setTimeout(()=>{const nc=draw();PH[AHI]=[...h,nc];countCard(nc);sndCard();acting=false;advance();},CARD_DELAY);}
 else if(a==="split"){deductInv(bet);acting=true;render();setTimeout(()=>{const c1=h[0],c2=h[1];const nc1=draw(),nc2=draw();PH[AHI]=[c1,nc1];PH.splice(AHI+1,0,[c2,nc2]);HB.splice(AHI+1,0,bet);HBC.splice(AHI+1,0,[...HBC[AHI]]);countCard(nc1);countCard(nc2);sndCard();acting=false;if(c1.rank==="A"){advance(AHI+2);return;}if(hv(PH[AHI])===21)advance();else render();},CARD_DELAY);}
-else if(a==="surrender"){addInv(bet/2);HB[AHI]=0;rMsg="Hand surrendered. Half bet returned.";phase="result";ST.hp++;ST.hl++;ST.tb+=bet;BR=cT(CI);render();}}
+else if(a==="surrender"){pendingPayout=[{r:"surrender",bc:HBC[AHI],bet}];HB[AHI]=0;rMsg="Hand surrendered. Half bet returned.";phase="result";ST.hp++;ST.hl++;ST.tb+=bet;render();}}
 
 function advance(fi){const ni=fi!==undefined?fi:AHI+1;if(ni<PH.length){AHI=ni;render();return;}phase="dealer";render();setTimeout(resolveStep,CARD_DELAY);}
 
@@ -339,22 +346,35 @@ function resolveStep(){
   }
 }
 
+let pendingPayout=null;
 function finishResolve(){
   const dt=hv(DC),dbj=DC.length===2&&dt===21;let res=[];
   PH.forEach((h,i)=>{const bet=HB[i],bc=HBC[i]||[];if(!bet)return;const pt=hv(h),pbj=h.length===2&&pt===21&&PH.length===1;ST.hp++;ST.tb+=bet;
-  if(pt>21){res.push({i,r:"bust"});ST.hl++;}
-  else if(pbj&&dbj){res.push({i,r:"push"});addInvByChips(bc,1);ST.hpu++;}
-  else if(pbj){const p=bet+bet*S.blackjackPays;res.push({i,r:"bj",p});addBJPayout(bc,S.blackjackPays);ST.hw++;ST.bj++;ST.tw+=p;}
-  else if(dbj){res.push({i,r:"lose"});ST.hl++;}
-  else if(dt>21){res.push({i,r:"win"});addInvByChips(bc,2);ST.hw++;ST.tw+=bet*2;}
-  else if(pt>dt){res.push({i,r:"win"});addInvByChips(bc,2);ST.hw++;ST.tw+=bet*2;}
-  else if(pt===dt){res.push({i,r:"push"});addInvByChips(bc,1);ST.hpu++;}
-  else{res.push({i,r:"lose"});ST.hl++;}});
-  BR=cT(CI);rMsg=res.map(r=>{if(r.r==="bj")return`Blackjack! +$${(r.p-HB[r.i]).toFixed(0)}`;if(r.r==="win")return`Win! +$${HB[r.i]}`;if(r.r==="push")return"Push.";if(r.r==="bust")return`Bust! -$${HB[r.i]}`;return`Lose. -$${HB[r.i]}`;}).join(" | ");
+  if(pt>21){res.push({i,r:"bust",bc});ST.hl++;}
+  else if(pbj&&dbj){res.push({i,r:"push",bc});ST.hpu++;}
+  else if(pbj){const p=bet+bet*S.blackjackPays;res.push({i,r:"bj",p,bc});ST.hw++;ST.bj++;ST.tw+=p;}
+  else if(dbj){res.push({i,r:"lose",bc});ST.hl++;}
+  else if(dt>21){res.push({i,r:"win",bc});ST.hw++;ST.tw+=bet*2;}
+  else if(pt>dt){res.push({i,r:"win",bc});ST.hw++;ST.tw+=bet*2;}
+  else if(pt===dt){res.push({i,r:"push",bc});ST.hpu++;}
+  else{res.push({i,r:"lose",bc});ST.hl++;}});
+  pendingPayout=res;
+  rMsg=res.map(r=>{if(r.r==="bj")return`Blackjack! +$${(r.p-HB[r.i]).toFixed(0)}`;if(r.r==="win")return`Win! +$${HB[r.i]}`;if(r.r==="push")return"Push.";if(r.r==="bust")return`Bust! -$${HB[r.i]}`;return`Lose. -$${HB[r.i]}`;}).join(" | ");
   const hasWin=res.some(r=>r.r==="win"),hasBJ=res.some(r=>r.r==="bj"),hasLose=res.some(r=>r.r==="lose"||r.r==="bust");
   if(hasBJ)sndBJ();else if(hasWin)sndWin();else if(hasLose)sndLose();
   holeCardCounted=false;
   phase="result";render();
+}
+function applyPayout(){
+  if(!pendingPayout)return;
+  pendingPayout.forEach(r=>{
+    if(r.r==="push")addInvByChips(r.bc,1);
+    else if(r.r==="bj")addBJPayout(r.bc,S.blackjackPays);
+    else if(r.r==="win")addInvByChips(r.bc,2);
+    else if(r.r==="surrender")addInv(r.bet/2);
+    // bust and lose: nothing returned
+  });
+  pendingPayout=null;BR=cT(CI);
 }
 
 function rGame(){BR=S.startingBankroll;phase="betting";PH=[[]];DC=[];HB=[0];HBC=[[]];fb=null;rMsg="";cBet=0;BC=[];CI=b2c(BR);cashBal=0;rShuf();resetCount();toast("Settings applied — game reset!","#f1c40f");render();}
@@ -364,7 +384,8 @@ function rStats(){ST={hp:0,hw:0,hl:0,hpu:0,bj:0,tb:0,tw:0,d:{hit:{c:0,t:0},stand
 let tabScroll={play:0,rules:0,stats:0,settings:0},prevTab="play";
 function render(){
   const el=document.getElementById("ct"),bv=document.getElementById("bdisp");
-  BR=cT(CI)+bT();bv.textContent="$"+BR.toLocaleString();bv.style.color="#f1c40f";
+  BR=cT(CI)+(phase==="betting"?bT():HB.reduce((s,b)=>s+b,0));
+  bv.textContent="$"+BR.toLocaleString();bv.style.color="#f1c40f";
   document.querySelectorAll(".tb").forEach(b=>b.classList.toggle("active",b.dataset.tab===aTab));
   // Save scroll position of previous tab
   if(prevTab!==aTab){tabScroll[prevTab]=el.scrollTop;prevTab=aTab;}
@@ -438,8 +459,8 @@ function rPlay(){
   h+=`<div style="position:relative;z-index:1;min-height:30px">`;
   h+=`<div style="text-align:center"><span style="font-size:9px;color:rgba(218,165,32,.4);font-family:Georgia,serif;letter-spacing:2px">BLACKJACK</span><br><span style="font-size:11px;color:rgba(218,165,32,.5);font-family:Georgia,serif;letter-spacing:1px;font-weight:700">PAYS ${bjPaysLabel()}</span></div>`;
   if(showCount){
-    h+=`<div style="position:absolute;left:0;top:0;display:flex;flex-direction:column;gap:2px"><div class="bet-badge" style="font-size:10px;padding:2px 8px">Bet: $${totalBet}</div><div class="bet-badge" style="font-size:10px;padding:2px 8px;color:#aaa;border-color:rgba(255,255,255,.1)">Bank: $${cT(CI)}</div></div>`;
-    h+=`<div style="position:absolute;right:0;top:0;display:flex;flex-direction:column;gap:2px;align-items:flex-end"><div class="bet-badge" style="font-size:9px;padding:2px 6px;color:#5dade2;border-color:rgba(93,173,226,.3)">Run count: ${rc}</div><div class="bet-badge" style="font-size:9px;padding:2px 6px;color:#5dade2;border-color:rgba(93,173,226,.3)">True count: ${tc}</div></div>`;
+    h+=`<div style="position:absolute;left:0;top:0;display:flex;flex-direction:column;gap:2px"><div class="bet-badge" style="font-size:10px;padding:2px 8px;min-width:95px;text-align:center">Bet: $${totalBet}</div><div class="bet-badge" style="font-size:10px;padding:2px 8px;color:#aaa;border-color:rgba(255,255,255,.1);min-width:95px;text-align:center">Bank: $${cT(CI)}</div></div>`;
+    h+=`<div style="position:absolute;right:0;top:0;display:flex;flex-direction:column;gap:2px;align-items:flex-end"><div class="bet-badge" style="font-size:10px;padding:2px 8px;color:#5dade2;border-color:rgba(93,173,226,.3);min-width:95px;text-align:center">Run count: ${rc}</div><div class="bet-badge" style="font-size:10px;padding:2px 8px;color:#5dade2;border-color:rgba(93,173,226,.3);min-width:95px;text-align:center">True count: ${tc}</div></div>`;
   } else {
     h+=`<div style="position:absolute;left:0;top:50%;transform:translateY(-50%)"><div class="bet-badge" style="font-size:10px;padding:2px 8px">Bet: $${totalBet}</div></div>`;
     h+=`<div style="position:absolute;right:0;top:50%;transform:translateY(-50%)"><div class="bet-badge" style="font-size:10px;padding:2px 8px;color:#aaa;border-color:rgba(255,255,255,.1)">Bank: $${cT(CI)}</div></div>`;
@@ -548,7 +569,7 @@ function rPlay(){
     if(S.countMode==="assisted"&&!countFb){
       h+=`<button class="dbtn" onclick="checkCount()" style="width:100%;background:linear-gradient(135deg,#2980b9,#1a5276);font-size:16px">CHECK COUNT</button>`;
     } else {
-      h+=`<button class="dbtn" onclick="phase='betting';fb=null;shF=false;BC=[];cBet=0;countFb=null;render()" style="width:100%;background:linear-gradient(135deg,#2980b9,#1a5276);font-size:16px">NEXT HAND</button>`;
+      h+=`<button class="dbtn" onclick="applyPayout();phase='betting';fb=null;shF=false;BC=[];cBet=0;countFb=null;render()" style="width:100%;background:linear-gradient(135deg,#2980b9,#1a5276);font-size:16px">NEXT HAND</button>`;
     }
   }
   h+=`</div></div></div>`;
